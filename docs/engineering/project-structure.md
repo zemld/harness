@@ -17,6 +17,8 @@
     │   └── .env                  # Not committed
     └── production/
         ├── k8s/                  # Flat directory; manifests named <service>-<kind>.yaml
+        ├── kind/                 # kind cluster definition for local k8s testing
+        │   └── cluster.yaml
         └── nginx/
             └── <project>.conf
 ```
