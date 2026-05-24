@@ -1,3 +1,5 @@
+# Go Service Structure
+
 ```
 <service>/
 ├── api/                        # API specs (openapi.yaml)
@@ -25,7 +27,8 @@
 │   │       ├── handler/
 │   │       └── server/
 │   ├── app/
-│   │   └── app.go              # Composition root — wires everything, only place with concrete types
+│   │   ├── app.go              # Composition root — fx.New(...); only place with concrete types
+│   │   └── <layer>.go          # Optional: fx.Module per layer, add only when app.go exceeds ~40 lines
 │   ├── config/
 │   │   ├── load.go
 │   │   └── types.go
