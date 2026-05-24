@@ -3,7 +3,7 @@
 ```
 <service>/
 ├── api/                        # API specs (openapi.yaml)
-├── cmd/main.go                 # Entry point — calls into internal/app, no logic
+├── cmd/main.go                 # Entry point — calls into internal/app, no logic; holds //go:generate for ogen
 ├── config/                     # Static config files (config.yaml)
 ├── deploy/                     # Dockerfile and deployment assets
 ├── generated/                  # Generated code (protobuf, grpc) — never edit by hand
@@ -48,24 +48,24 @@
 │   │       ├── <operation>.go      # One public method per file
 │   │       └── <operation>_test.go
 │   └── utils/                  # Generic, domain-free helpers (last resort)
-├── generate.go                # //go:generate directive for ogen
 ├── go.mod
 ├── Makefile
 ├── .golangci.yml
-└── .mockery.yml
+├── .mockery.yml
+└── .tool-versions             # asdf/mise Go version pin (e.g. golang 1.25.8)
 ```
 
 ## REST API generation
 
 `api/openapi.yaml` is the single source of truth for the REST contract. `ogen` consumes it and generates everything under `internal/api/rest/ogen/`: request/response types, the `Handler` interface, routing, request parsing, response encoding, and validation.
 
-**`generate.go`** at the service root holds the generation directive:
+**`cmd/main.go`** holds the generation directive (paths are relative to `cmd/`):
 
 ```go
-package main
-
-//go:generate go run github.com/ogen-go/ogen/cmd/ogen --target ./internal/api/rest/ogen --package ogen --clean ./api/openapi.yaml
+//go:generate go run github.com/ogen-go/ogen/cmd/ogen --target ../internal/api/rest/ogen --package ogen --clean ../api/openapi.yaml
 ```
+
+Placing it in `cmd/main.go` keeps the root free of orphaned `package main` files that break `go build ./...`.
 
 **Makefile `gen` target** must run `go generate ./...` (in addition to any protobuf generation).
 
@@ -76,3 +76,15 @@ package main
 - `internal/api/rest/server/` calls `ogen.NewServer(handler)` and wraps it in a struct with `Start`/`Stop` methods.
 
 **What disappears with ogen:** there is no `dto/` package. All request and response types come from `ogen/`. Never write DTO structs by hand for REST endpoints.
+
+## Layering
+
+**`domain/` has zero imports from `internal/`.** No framework types, no adapter types.
+
+**`services/` depends on `domain/` types and `ports/` interfaces only.** Never import a concrete adapter package from a service.
+
+**Only `internal/app/app.go` may import concrete types** and wire them together via DI.
+
+**Port interfaces (outgoing contracts) live in `ports/`.** `ports/` contains interfaces only — no structs, no implementations.
+
+**Incoming service interfaces live in `domain/<bounded_context>/service.go`.** This is the contract that handlers and other callers use.
