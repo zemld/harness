@@ -131,6 +131,10 @@ Content…
   A definition note might have 3 sections; a complex algorithm note might have 6.
 - Keep each section coherent and scannable. If a section grows beyond ~150 words
   and can be split cleanly, split it.
+- **Mathematical formulas must use LaTeX syntax.** Inline math: `$formula$`.
+  Display (block) math: `$$formula$$`. Never write formulas as plain text or code
+  blocks. Example: write `$p_Y(y) = p_X(g^{-1}(y)) \cdot \left|\frac{dx}{dy}\right|$`
+  not `` `p_Y(y) = p_X(g^{-1}(y)) · |dx/dy|` ``.
 
 ### `overview.md` for a category
 

@@ -81,10 +81,10 @@ Placing it in `cmd/main.go` keeps the root free of orphaned `package main` files
 
 **`domain/` has zero imports from `internal/`.** No framework types, no adapter types.
 
-**`services/` depends on `domain/` types and `ports/` interfaces only.** Never import a concrete adapter package from a service.
+**`services/` depends on `domain/` types and `ports/` interfaces only.** Never import a concrete adapter package from a service. Never import another `internal/services/` package from a service — if service A needs service B, it must depend on B's domain interface, not on `internal/services/B` directly.
 
 **Only `internal/app/app.go` may import concrete types** and wire them together via DI.
 
-**Port interfaces (outgoing contracts) live in `ports/`.** `ports/` contains interfaces only — no structs, no implementations.
+**Port interfaces (outgoing contracts) live in `ports/`.** `ports/` contains interfaces only — no structs, no implementations. Examples: HTTP clients, repositories. Do NOT define service-to-service contracts here.
 
-**Incoming service interfaces live in `domain/<bounded_context>/service.go`.** This is the contract that handlers and other callers use.
+**Incoming service interfaces live in `domain/<bounded_context>/service.go`.** Every service that other code depends on must declare its interface in `domain/` — not in `internal/services/<name>/interfaces.go`. This applies to all callers: REST handlers, agents, other services. Example: `domain.INNSearchService`, `domain.RelevanceService`. The implementation lives in `internal/services/`; the contract lives in `domain/`.
