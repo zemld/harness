@@ -23,20 +23,11 @@ Work through five phases in order. Never skip ahead.
 
 ## Phase 1 — Orient: find and read the KB
 
-**1.1 Find the KB root**
+Read `docs/knowledge-base/structure.md` for KB layout, root-discovery procedure, wiki-link syntax, and convention rules. Follow those to locate the KB root and understand the existing structure.
 
-Walk up from the current working directory, looking for a file named `Entrypoint.md`.
-The directory that contains it is the KB root.
+Once oriented, do the following tasks that are specific to writing:
 
-If no `Entrypoint.md` is found anywhere up the tree, treat CWD as the root and
-create a minimal `Entrypoint.md` there:
-```markdown
-# Knowledge Base
-
-## Категории
-```
-
-**1.2 Map the existing structure**
+**1.1 Map the existing structure**
 
 List all `.md` files in the KB recursively. Read:
 - `Entrypoint.md` — the index; tells you what categories already exist
@@ -44,15 +35,9 @@ List all `.md` files in the KB recursively. Read:
 - Any file whose name is closely related to the user's topic — to avoid duplication
   and to find cross-link targets
 
-**1.3 Infer conventions**
+**1.2 Carry conventions forward**
 
-Before writing a single word of content, note:
-- **Language** — if existing files are in Russian, write in Russian. Match what's there.
-- **Heading style** — how many `#` levels do existing files use?
-- **Section names** — are they Russian ("Связанные темы") or English ("Related topics")?
-- **File naming** — kebab-case? lowercase? spaces?
-
-Carry these conventions forward. The new files must feel like they belong.
+The new files must feel like they belong. Match language, heading style, section names, and file naming to whatever already exists in the KB.
 
 ---
 
@@ -137,8 +122,8 @@ Content…
 
 - Write the `> summary` callout on every file — it's the first thing you read when
   scanning and it saves the reader from parsing the whole note to understand scope.
-- Use `[[wiki-links]]` (Obsidian syntax) for **all** internal cross-references.
-  The path must be relative to the KB root, e.g. `[[machine-learning/gradient-descent|Gradient Descent]]`.
+- Use `[[wiki-links]]` for **all** internal cross-references — see `docs/knowledge-base/structure.md`
+  for the exact syntax and path rules.
 - Only link to files that already exist in the KB or that you are creating in this
   same session. Never create a dangling link to a hypothetical future note.
 - Omit "Связанные темы" if there is genuinely nothing relevant to link to yet.

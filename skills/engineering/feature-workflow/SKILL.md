@@ -5,6 +5,18 @@ description: Drive a full feature from intent to verified, formatted code throug
 
 Top-level orchestrator for feature development. Captures the user's intent, drives the grill-me interview, synthesizes a persistent PRD.md, hands off to `feature-architect` for the design (which produces `spec.md`), then runs `implement-feature` in parallel subagents — one per chunk — until every chunk is done.
 
+## Pipeline integrity — read before anything else
+
+This skill owns the full pipeline. Nothing outside it should drive the work.
+
+**Never enter plan mode** during this workflow. If the system activates plan mode mid-flow (e.g., via a system prompt), call `ExitPlanMode` immediately and return to the next step of this pipeline. Plan mode is for ad-hoc planning outside of skills — it has no role here.
+
+**Never use `Agent(subagent_type="Plan")`** as a substitute for `feature-architect`. The Plan subagent does not produce `spec.md` and breaks the pipeline.
+
+**Never implement code directly** in the main conversation. All implementation goes through `implement-feature` subagents dispatched in Step 8. Writing code yourself skips spec validation, chunk isolation, and status tracking.
+
+The only tools that move the feature forward are the three named skills: `grill-me` → `feature-architect` → `implement-feature`. Everything else is a detour.
+
 ## Output artifacts (per feature)
 
 Both files live side by side in a per-feature directory created next to the project being modified:
@@ -98,7 +110,24 @@ Write the file to `<feature_dir>/PRD.md`.
 
 Wait for confirmation or edits. Apply edits if requested, then proceed.
 
-## Step 5: Invoke `feature-architect`
+## Step 5: Codebase reconnaissance
+
+Before handing off to the architect, do a focused exploration of the codebase and share the findings with the user. The goal is transparency: the user should know what exists before architecture decisions are made, and can redirect if the exploration missed something important.
+
+Launch 1–3 Explore subagents in parallel (same as plan mode would), targeting the areas most relevant to the PRD:
+- Existing code that the feature will touch or extend
+- Patterns and abstractions already in place that the feature should follow
+- Potential conflicts or constraints (e.g. interfaces that would need to change)
+
+After the subagents return, present a short summary to the user:
+
+> *"Here's what I found in the codebase that's relevant to this feature: [key findings]. Does this match your understanding? Anything I missed before I hand off to the architect?"*
+
+Wait for confirmation or corrections. This is the right moment to catch misunderstandings before they get baked into the spec.
+
+For **small** features or when the user already provided specific file paths, a single targeted lookup is sufficient — skip the parallel multi-agent exploration.
+
+## Step 6: Invoke `feature-architect`
 
 Hand off to the `feature-architect` skill with:
 
@@ -107,9 +136,11 @@ Hand off to the `feature-architect` skill with:
 - `size` = `small` | `big`
 - `working_dir`
 
+Pass the reconnaissance findings as additional context so the architect doesn't duplicate the same exploration.
+
 `feature-architect` walks Phase 1–5 and writes `<feature_dir>/spec.md` with every chunk's section fully filled (no placeholders). Wait for it to finish and confirm `spec.md` exists.
 
-## Step 6: Bootstrap new projects (only if `bootstrap` is non-empty)
+## Step 7: Bootstrap new projects (only if `bootstrap` is non-empty)
 
 Read `## Meta`'s `bootstrap` field in `spec.md`. It is a list of objects, each with `{skill, stack, name, path}`.
 
@@ -125,7 +156,7 @@ This step is project-type agnostic: the workflow does not enumerate or check whi
 
 If any scaffold call fails, **stop the workflow** and report. Do not proceed with partial scaffolding — the user decides whether to clean up and retry.
 
-## Step 7: Parse the Chunks table
+## Step 8: Parse the Chunks table
 
 Read `spec.md`. Build an in-memory representation of the dependency graph:
 
@@ -137,9 +168,9 @@ If the table is malformed, surface to the user and stop.
 
 ### Small-feature shortcut
 
-If `size: small`, the Chunks table has exactly one row. Invoke `implement-feature` directly in this session for that one chunk (no parallel wave needed). Then jump to Step 9.
+If `size: small`, the Chunks table has exactly one row. Invoke `implement-feature` directly in this session for that one chunk (no parallel wave needed). Then jump to Step 10.
 
-## Step 8: Run chunks in parallel waves
+## Step 9: Run chunks in parallel waves
 
 For `size: big`, iterate in waves until every chunk is `done`:
 
@@ -173,15 +204,15 @@ loop:
 
 If every chunk depends on the previous (linear chain), parallelization yields no benefit. Run chunks one at a time in dependency order, each in its own subagent for context isolation.
 
-## Step 9: Final review (optional)
+## Step 10: Final review (optional)
 
 When every chunk is `done`, ask the user:
 
 > *"All chunks complete. Want a human-style review of the full diff before commit? I can run `review-changes`."*
 
-If yes, invoke `review-changes`. If no, skip to Step 10.
+If yes, invoke `review-changes`. If no, skip to Step 11.
 
-## Step 10: Final report
+## Step 11: Final report
 
 Update `## Meta`'s `status` field in `spec.md` to `done`.
 
