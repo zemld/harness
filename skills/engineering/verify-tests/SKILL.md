@@ -1,51 +1,54 @@
 ---
 name: verify-tests
-description: Review Go test files for convention violations and report them as a table. Use whenever the user asks to "verify tests", "check my tests", "review tests", "проверь тесты", "do my tests follow conventions?", "are these tests correct?", or whenever tests have just been written and need a quality check. Also trigger when chunk-orchestrator invokes this after the test-writing step. Trigger even when the user doesn't say "verify" explicitly — if they show you _test.go files and ask whether they look right, this skill applies.
+description: Review test files for convention violations and report them as a table. The conventions per stack live in the docs listed by `docs/engineering/<stack>/index.md` Verify-tests section; this skill detects the stack and audits against those docs. Use whenever the user asks to "verify tests", "check my tests", "review tests", "проверь тесты", "do my tests follow conventions?", "are these tests correct?", or whenever tests have just been written and need a quality check.
 ---
 
-Review Go `_test.go` files against the project's testing conventions and surface every violation in a structured table. This is a read-only diagnostic — never modify any file.
+Review test files against the project's testing conventions and surface every violation in a structured table. Read-only — never modify any file.
+
+The conventions are not in this skill — they live in the docs listed by the target stack's `docs/engineering/<stack>/index.md` under the Verify-tests section.
 
 ## Step 1: Identify the test files
 
-Look in the conversation context for `_test.go` files. They may be listed by path or pasted inline. Collect all file paths before proceeding.
+Collect every test file path from the conversation context.
 
 ## Step 2: Launch the reviewer subagent
 
-Spawn a subagent using the **Agent tool** (no subagent type — default general-purpose). Replace `<TEST_FILE_PATHS>` with the actual paths collected in Step 1:
+Spawn a subagent using the **Agent tool** (default `general-purpose`). Substitute `<TEST_FILE_PATHS>` and `<harness_root>`:
 
 ---
-You are reviewing Go test files for convention adherence. Read-only — do not modify any file.
+You are reviewing test files for convention adherence. Read-only — never modify any file.
 
-### 1. Load the conventions
-
-Read `docs/engineering/go/testing.md` in full. Every rule in that file is authoritative. Do not apply rules from memory or general Go knowledge — only what the doc says.
-
-### 2. Read the test files
-
-Read each file in full:
+**Test files:**
 <TEST_FILE_PATHS>
 
-### 3. Check for violations
+**Instructions:**
 
-For each `TestXxx` function in each file, check it against every rule from the doc.
+1. **Detect the stack(s).** Walk from each test file to the nearest project root. Map the manifest to the stack name. If multiple stacks are present, repeat steps 2–4 per stack and report each in its own section.
 
-### 4. Report as a table
+2. **Read `<harness_root>/docs/engineering/<stack>/index.md`** and locate the `## Verify tests` section. If the index doesn't exist or has no Verify-tests section, stop and report the gap.
 
-Output a single Markdown table with one row per violation:
+3. **Read every doc the section lists.** These docs are the source of truth.
 
-| File | Test Function | Rule | Violation | Suggested Fix |
-|------|--------------|------|-----------|---------------|
+4. **Read each test file in full.**
 
-- **File**: short filename only (not full path)
-- **Rule**: exact rule name from the doc (e.g. "Table-driven only", "Parallel by default")
-- **Violation**: what is concretely wrong in this function
-- **Suggested Fix**: specific, actionable change
+5. **For each test in each file, check it against every rule from the relevant doc.** Use the exact rule names from the docs.
 
-If there are no violations, output:
-`All tests pass — no convention violations found.`
+**Output:**
 
-After the table (or the no-violations line), add a summary:
-`N violation(s) across M file(s).`
+```
+Stack detected: <stack> | Mixed
+
+For stack <stack>:
+  Index consulted: docs/engineering/<stack>/index.md → Verify tests
+  Docs read: <comma-separated list>
+
+| File | Test | Rule | Violation | Suggested Fix |
+|------|------|------|-----------|---------------|
+
+N violation(s) across M file(s).
+```
+
+If there are no violations, replace the table with `All tests pass — no convention violations found.`
 ---
 
 ## Step 3: Present the result

@@ -1,6 +1,6 @@
 ---
 name: feature-architect
-description: Design the architecture of a Go feature from a PRD and produce a complete `spec.md` — architecture overview, chunk decomposition, and per-chunk design with `intent`/`working_dir`/`files`/`interfaces`/`edge_cases`/`dependencies`/`notes` all filled. Use when the user asks to "design the architecture", "split this into chunks", "напиши спеку фичи", "сделай дизайн фичи", or when a PRD exists and the next step is engineering design. Do NOT use for gathering product requirements (that belongs in the PRD step that runs before this), or for writing code.
+description: Design the architecture of a feature from a PRD and produce a complete `spec.md` — architecture overview, chunk decomposition, and per-chunk design with `intent`/`working_dir`/`files`/`interfaces`/`edge_cases`/`dependencies`/`notes` all filled. Works for any project type the harness has docs for (currently Go services and frontend projects). Use when the user asks to "design the architecture", "split this into chunks", "напиши спеку фичи", "сделай дизайн фичи", or when a PRD exists and the next step is engineering design. Do NOT use for gathering product requirements (that belongs in the PRD step that runs before this), or for writing code.
 ---
 
 Turn a finished PRD into a complete `spec.md`. Make every architectural trade-off explicit, decompose the feature into chunks that can be implemented and tested in isolation, and fill each chunk's section with everything an implementer needs to write code without further design decisions — no lazy placeholders, no follow-up design step.
@@ -14,7 +14,7 @@ Path inputs may be absolute or relative to the current working directory — the
 - **`prd_path`** — path to `PRD.md`. The architect reads this first.
 - **`feature_dir`** — path to the per-feature directory the caller has already created. `spec.md` will be written here as a sibling of `PRD.md`.
 - **`size`** — `small` or `big`. Determines chunk count: `small` produces a single-chunk spec, `big` produces multiple chunks with a dependency graph. Does not change the design process.
-- **`working_dir`** — path to the Go service repo root the feature targets. For multi-service features, this is the primary service; individual chunks may override.
+- **`working_dir`** — path to the project repo root the feature targets (Go service, frontend project, or any other project the harness can scaffold). For multi-project features, this is the primary project; individual chunks may override.
 
 ## Output
 
@@ -31,8 +31,8 @@ Skill instructions are in English. **Respond in the user's language** during cla
 Silent — do not narrate tool calls.
 
 1. **Read `PRD.md` in full.** This is the primary source of truth for intent, constraints, and success criteria.
-2. **Skim the target codebase.** Look at `working_dir`'s top-level layout, the manifest (`go.mod`), and the directories the feature most likely touches (`internal/services/`, `internal/adapters/`, `internal/domain/`).
-3. **Note the existing patterns.** Repository layout (one operation per file, `service.go` shape), interface segregation (`ports/`), naming conventions, where tests live.
+2. **Skim the target codebase.** Look at `working_dir`'s top-level layout and the project manifest. Read just enough to understand the shape — which top-level directories exist and what they group.
+3. **Identify the stack and load its convention docs.** The manifest names the stack. Conventions live in `docs/engineering/<stack>/`. Read those docs (structure, style, dependencies, plus any feature-area docs the feature will touch) before designing — they govern where each chunk lands and what it depends on.
 
 Keep this to a handful of file reads. Enough to understand the shape — not a full audit.
 
@@ -110,7 +110,7 @@ The file must match `docs/feature-plans/spec-schema.md` exactly. Read that schem
 
 ### What to write
 
-1. **`## Meta`** — `slug` (derive from the basename of `feature_dir`), `size`, current timestamp, `status: in-progress`, `working_dir`, `bootstrap_services`, `prd: ./PRD.md`. See "Detecting new services" below.
+1. **`## Meta`** — `slug` (derive from the basename of `feature_dir`), `size`, current timestamp, `status: in-progress`, `working_dir`, `bootstrap`, `prd: ./PRD.md`. See "Declaring new projects in `bootstrap`" below.
 2. **`## Architecture`** — 1–2 paragraphs of the chosen approach, the mermaid diagram, and a single line `Why this approach: <reference to PRD constraints>`.
 3. **`## Chunks`** — the dependency table, all `pending`, no owners.
 4. **`## Chunk <ID> — <name>`** for every row — every field filled at a **descriptive** level (not code level):
@@ -123,26 +123,32 @@ The file must match `docs/feature-plans/spec-schema.md` exactly. Read that schem
    - `### notes` (perf / security / transactional constraints — or empty)
    - `### status` block initialized to `implement: pending`
 
-**Level of detail.** The spec describes **what** each chunk does and **what shape** its API has, not **how** it's written in Go. Exact method signatures, struct field types, error types — all that is the implementer's responsibility, derived from the intent and edge cases. The architect's job is to leave no ambiguity about behavior, files, and component boundaries; the implementer's job is to choose the Go-level surface that satisfies the spec.
+**Level of detail.** The spec describes **what** each chunk does and **what shape** its API has, not **how** it's written in code. Exact method signatures, struct/interface field types, error types — all that is the implementer's responsibility, derived from the intent and edge cases. The architect's job is to leave no ambiguity about behavior, files, and component boundaries; the implementer's job is to choose the code-level surface that satisfies the spec.
 
 **Do not leave any placeholder.** If you cannot describe a field at the descriptive level above, the chunk is not ready — split it further or surface the gap to the user.
 
-### Detecting new services (`bootstrap_services`)
+### Declaring new projects in `bootstrap`
 
-A new service is needed when the architecture introduces a component that doesn't yet exist as a Go service under `working_dir`'s parent directory:
+`bootstrap` is the list of projects that don't yet exist on disk and must be scaffolded before any chunk runs. Each entry is `{skill, stack, name, path}`:
 
-- If yes: set `working_dir` in Meta to the **future** path of the primary new service, and list new service names in `bootstrap_services`. Scaffolding will happen later, before any chunk runs — declaring the names here is enough.
-- If no: set `bootstrap_services: []`.
+- **`skill`** — typically `scaffold-project` (the generic scaffolding skill that delegates to the stack's Scaffold procedure in its index). Use a different scaffold skill only if one exists for a specific stack and supersedes the generic one.
+- **`stack`** — name of the target stack. Must match a directory under `docs/engineering/<stack>/` that contains an `index.md`. Examples: `go`, `frontend`.
+- **`name`** — the project name.
+- **`path`** — absolute path where the project must live after scaffolding.
 
-Do **not** scaffold yourself. Your job is only to declare the need.
+Rules:
 
-When chunks reference files inside a service that's still in `bootstrap_services`, use the standard layout (`internal/domain/`, `internal/services/<svc>/`, `internal/adapters/...`, `cmd/main.go`). The scaffolding step that runs before chunks will produce this structure deterministically, so those paths will exist by the time chunks run.
+- If the feature only extends existing projects, set `bootstrap: []`.
+- If a new project is needed, set `working_dir` in Meta to the **future** path of the primary new project, and add a `bootstrap` entry per new project. Scaffolding happens later (in `feature-workflow`'s Bootstrap step) — declaring the entries here is enough.
+- Do **not** scaffold yourself. Your job is only to declare the need.
+
+When chunks reference files inside a not-yet-scaffolded project, use the standard layout described in that stack's `docs/engineering/<stack>/` (typically `project-structure.md` or `service-structure.md`). The scaffolding step that runs before chunks produces this structure deterministically, so those paths will exist by the time chunks run.
 
 ### Decomposing into chunks
 
 A chunk is a unit of work that can be implemented and tested in isolation once its dependencies are done. Good chunks:
 
-- **Map to layers or components, not phases.** `C1: domain types`, `C2: service.SaveX`, `C3: repository.SaveX`, `C4: REST handler` — not `C1: design`, `C2: code`, `C3: tests`.
+- **Map to layers or components, not phases.** A chunk represents one layer or component of the target stack — pick names that match how the stack's `docs/engineering/<stack>/project-structure.md` (or equivalent) splits responsibilities. Not `C1: design`, `C2: code`, `C3: tests`.
 - **Are independent where possible.** Two chunks sharing no files and no in-flight types get no edge between them — downstream consumers can run independent chunks in parallel.
 - **Have a clear handoff.** `C2 depends on C1` means C2 imports or consumes types introduced by C1. Coincidental package sharing is not a dependency.
 - **Are small enough to verify.** One or two new files plus minimal edits per chunk. If a chunk needs ten files, split it.
@@ -151,7 +157,7 @@ A chunk is a unit of work that can be implemented and tested in isolation once i
 
 - **`intent`** — answers "what does this chunk deliver, and why" in 1–3 sentences. Source of truth for `verify-logic` later.
 - **`files`** — every file, with one-line purpose. No "and other files" — be exhaustive.
-- **`interfaces`** — for each interface: name, package path, full method signatures. If the chunk consumes an interface from another chunk, list it here too with a note like "consumed from C1".
+- **`interfaces`** — for each interface or contract the chunk introduces or consumes: name, location, and the public surface (method signatures, exported types, etc.). The stack's docs decide what counts as a "contract" — follow whatever the matching `docs/engineering/<stack>/` describes. If the chunk has no formal interface, `—` is acceptable. If the chunk consumes an interface from another chunk, list it here with a note like "consumed from C1".
 - **`edge_cases`** — at least 3 cases when the chunk has non-trivial logic: happy path, one edge, one error. The tests will be derived from this list.
 - **`dependencies`** — packages or ports this chunk imports from. Helps the implementer wire imports without re-reading the whole codebase.
 - **`notes`** — only fill when there's a real constraint (perf budget, transactional invariant, no-go API). Empty otherwise — don't pad.

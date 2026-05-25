@@ -22,8 +22,8 @@
 - size: small | big
 - created: <ISO 8601 timestamp>
 - status: in-progress | done
-- working_dir: <absolute path to the service repo root>
-- bootstrap_services: []   # or [name1, name2] when new services must be scaffolded
+- working_dir: <absolute path to the project repo root>
+- bootstrap: []   # or list of {skill, stack, name, path} entries — see "Bootstrap entries" below
 - prd: ./PRD.md
 
 ## Architecture
@@ -82,7 +82,13 @@ Empty by default.>
 - **`size`** — `small` (single chunk, no architectural variants explored) or `big` (multi-chunk, three variants discussed).
 - **`status`** — `in-progress` while chunks are running, `done` when every chunk's status is `done`.
 - **`working_dir`** — default working directory for chunks. Each chunk's section may override.
-- **`bootstrap_services`** — list of new Go service names that don't yet exist and must be scaffolded before any chunk runs. `[]` means the feature only extends existing services.
+- **`bootstrap`** — list of projects that don't yet exist and must be scaffolded before any chunk runs. Each entry is an object with four fields:
+  - **`skill`** — identifier of the scaffolding capability to invoke for this project. The harness resolves this identifier to the runner that performs the bootstrap.
+  - **`stack`** — name of the target stack — must match a directory under `docs/engineering/<stack>/` that contains an `index.md`. Examples: `go`, `frontend`. The scaffolding runner uses this to look up the Scaffold procedure for that stack.
+  - **`name`** — project name.
+  - **`path`** — absolute path where the project must live after scaffolding.
+
+  `[]` means the feature only extends existing projects. The producer of this spec chooses the `skill` and `stack` explicitly per entry; the consumer that runs the bootstrap step iterates the list and invokes each entry's capability with `stack`, `name`, and `path`. The schema is open: any value the harness can resolve to a scaffolding runner is valid for `skill`, and any stack with an index is valid for `stack`.
 - **`prd`** — relative path to the PRD.md file, always `./PRD.md`.
 
 ### Chunks table
@@ -135,7 +141,7 @@ Parse the Chunks table. Select rows whose Status is `pending` AND whose `Depends
 - created: 2026-05-24T11:00:00Z
 - status: in-progress
 - working_dir: ~/code/backend/services/perfumist
-- bootstrap_services: []
+- bootstrap: []
 - prd: ./PRD.md
 
 ## Architecture

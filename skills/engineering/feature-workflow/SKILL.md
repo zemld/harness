@@ -1,6 +1,6 @@
 ---
 name: feature-workflow
-description: Drive a full Go feature from intent to verified, formatted code through a structured pipeline — grill the user, synthesize a `PRD.md`, run `feature-architect` to produce a `spec.md`, scaffold any new services, then dispatch `implement-feature` subagents in parallel waves for each chunk. Use this skill **proactively** whenever the user expresses intent to build a new feature, integrate a service, add functionality, or implement anything non-trivial — including phrases like "хочу добавить", "давай реализуем", "новая фича", "let's build", "let's add", "implement X end-to-end", "I want to add Y". Trigger even when the user doesn't say the word "feature" — if they describe new behavior they want built and the change is more than a one-line tweak, this is the starting skill. Also activates on `/feature-workflow`. Do NOT use for bug fixes, single-line tweaks, refactors with no new behavior, code reviews, or planning discussions — those are other skills.
+description: Drive a full feature from intent to verified, formatted code through a structured pipeline — grill the user, synthesize a `PRD.md`, run `feature-architect` to produce a `spec.md`, scaffold any new projects listed in the spec, then dispatch `implement-feature` subagents in parallel waves for each chunk. Use this skill **proactively** whenever the user expresses intent to build a new feature, integrate a service, add functionality, or implement anything non-trivial — including phrases like "хочу добавить", "давай реализуем", "новая фича", "let's build", "let's add", "implement X end-to-end", "I want to add Y". Trigger even when the user doesn't say the word "feature" — if they describe new behavior they want built and the change is more than a one-line tweak, this is the starting skill. Also activates on `/feature-workflow`. Do NOT use for bug fixes, single-line tweaks, refactors with no new behavior, code reviews, or planning discussions — those are other skills.
 ---
 
 Top-level orchestrator for feature development. Captures the user's intent, drives the grill-me interview, synthesizes a persistent PRD.md, hands off to `feature-architect` for the design (which produces `spec.md`), then runs `implement-feature` in parallel subagents — one per chunk — until every chunk is done.
@@ -30,7 +30,7 @@ Read these schemas before the steps that use them. Paths are relative to the har
 
 The user describes what they want. If auto-triggered by a feature-intent phrase, the description is in their first message. If invoked by `/feature-workflow`, the user may have provided `$ARGUMENTS`; if not, ask:
 
-> *"What are we building? Describe the task — what should exist and in which service."*
+> *"What are we building? Describe the task — what should exist and in which project."*
 
 (Translate to the user's language.)
 
@@ -57,14 +57,14 @@ The grilling output stays in the conversation context. The next step persists it
 
 Decide between `small` and `big`:
 
-- **small** — single helper, single function, one-file change, no new adapters, no new domain types crossing service boundaries.
-- **big** — multiple layers, new adapter, new cross-service domain type, multiple services, new external dependency.
+- **small** — single helper, single function, one-file change, no new architectural seams, no new types crossing project boundaries.
+- **big** — multiple layers, new architectural seam (adapter, integration, page+feature, etc.), new cross-project type, multiple projects, new external dependency.
 
 If unclear, ask once: *"Is this a small feature (one chunk, no architectural variants) or a big one (full design with three variants)?"*
 
 Derive `<feature-slug>` — kebab-case, descriptive (e.g. `add-perfume-notes`, `sso-google`, `canonize-perfume-name`).
 
-Identify `working_dir` — the path to the Go service root the feature targets. If unclear, ask. For a brand-new service that doesn't exist yet, use the **future** path the service will live at.
+Identify `working_dir` — the path to the project root the feature targets. If unclear, ask. For a brand-new project that doesn't exist yet, use the **future** path the project will live at.
 
 ## Step 4: Create the feature directory and synthesize `PRD.md`
 
@@ -109,18 +109,19 @@ Hand off to the `feature-architect` skill with:
 
 `feature-architect` walks Phase 1–5 and writes `<feature_dir>/spec.md` with every chunk's section fully filled (no placeholders). Wait for it to finish and confirm `spec.md` exists.
 
-## Step 6: Bootstrap new services (only if `bootstrap_services` is non-empty)
+## Step 6: Bootstrap new projects (only if `bootstrap` is non-empty)
 
-Read `## Meta`'s `bootstrap_services` field in `spec.md`.
+Read `## Meta`'s `bootstrap` field in `spec.md`. It is a list of objects, each with `{skill, stack, name, path}`.
 
-- **Empty list `[]`** — the feature extends only existing services. Skip this step.
-- **One or more names** — for each name, invoke `scaffold-go-service` to scaffold it.
+- **Empty list `[]`** — the feature extends only existing projects. Skip this step.
+- **One or more entries** — for each entry, invoke the skill named in its `skill` field, passing the remaining fields as inputs.
 
-For each entry:
+For each entry `{skill, stack, name, path}`:
 
-1. Determine the absolute target path (typically `<working_dir>`'s parent + service name; follow the project's service-directory convention).
-2. Invoke `scaffold-go-service` with the service name and target path.
-3. Wait for it to complete. Verify the directory was created.
+1. Invoke the named `skill` (typically `scaffold-project`) with `stack`, `name`, and `path` from the entry.
+2. Wait for it to complete. Verify the directory at `path` was created.
+
+This step is project-type agnostic: the workflow does not enumerate or check which kinds of projects can be scaffolded. `feature-architect` chose the right skill and stack per entry when it filled `bootstrap`; the workflow just invokes what is written.
 
 If any scaffold call fails, **stop the workflow** and report. Do not proceed with partial scaffolding — the user decides whether to clean up and retry.
 

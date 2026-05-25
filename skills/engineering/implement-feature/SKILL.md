@@ -1,9 +1,11 @@
 ---
 name: implement-feature
-description: Drive a complete Go code-writing flow from a structured spec — interfaces, stubs, tests, verify-tests, implementation (tests frozen), go test, verify-logic, format, verify-style. The spec is the design; this skill is pure execution. Use when the caller has a finished design spec (intent, working_dir, files, interfaces) and wants verified, formatted, style-clean code. Trigger on "implement this feature", "run the implementation flow", "execute the spec", "реализуй фичу по спеке", "запусти имплементацию", or when an upstream skill hands off a completed design spec. Do NOT use for design or decomposition — those are upstream concerns the spec must already resolve.
+description: Drive a complete code-writing flow from a structured spec by running the chunk through the pipeline defined for its stack in `docs/engineering/<stack>/index.md`. The spec is the design; this skill is pure execution. Use when the caller has a finished design spec (intent, working_dir, files, interfaces) and wants verified, formatted code. Trigger on "implement this feature", "run the implementation flow", "execute the spec", "реализуй фичу по спеке", "запусти имплементацию", or when an upstream skill hands off a completed design spec. Do NOT use for design or decomposition — those are upstream concerns the spec must already resolve.
 ---
 
-Take a completed design spec and walk it through nine stages: contracts → stubs → tests → verify-tests → implementation → `go test` → verify-logic → format → verify-style. Every skill stage runs inside a dedicated `Agent` subagent for context isolation. The orchestrator never edits production code itself.
+Take a completed design spec, detect what kind of project the chunk targets, look up the implementation pipeline for that stack in `docs/engineering/<stack>/index.md`, and execute the stages it lists. Every skill stage runs inside a dedicated `Agent` subagent for context isolation. The orchestrator never edits production code itself.
+
+This skill is a generic stage runner. Stack-specific stage lists, commands, retry caps, and test-freeze patterns all live in the index. Adding a new stack means writing its index — no edit to this skill.
 
 ## Inputs
 
@@ -24,142 +26,90 @@ Required fields:
 
 ```yaml
 intent:           # 1–3 sentences — what this code does and why
-working_dir:      # absolute path to the Go service root
+working_dir:      # absolute path to the project root
 files:            # list of file paths (relative to working_dir) the change creates/modifies
-interfaces:       # list of interfaces: name, package path, method signatures
+interfaces:       # list of interfaces/contracts: name, location, signatures (may be "—" for stacks without formal interfaces)
 ```
 
 Optional fields:
 
 ```yaml
 edge_cases:       # list of cases the tests must cover (happy / edge / error)
-dependencies:     # other packages/ports the implementation uses
+dependencies:     # other packages/ports/modules the implementation uses
 notes:            # constraints to respect (perf budgets, no-go APIs, etc.)
 prd_path:         # absolute path to PRD.md, used only as secondary reference for ambiguity
 ```
 
-## Step 0: Validate the spec
+## Step 0 — Validate and load the pipeline
+
+### 0a. Validate the spec
 
 Verify every required field is present and non-empty. If anything is missing, **stop and report the missing fields in the final report**. Do not invent missing fields and do not attempt to ask back interactively — the caller is typically a subagent and will re-invoke after correcting the spec.
 
-Derive once and reuse throughout:
+### 0b. Detect the target stack
 
-- `production_files` = files in `files` not ending in `_test.go`
-- `test_files` = files in `files` ending in `_test.go`
-- `affected_packages` = unique directory paths from `files` (used by Stage 6)
+Determine the stack from the chunk's context, in this order:
 
-## Pipeline
+1. **`working_dir` manifest.** `go.mod` → stack `go`. `package.json` (typically with `vite.config.ts`) → stack `frontend`. Other manifests map to other stacks the harness has indexes for.
+2. **Chunk's `files` paths.** Used when `working_dir` has multiple manifests or doesn't exist yet (pending bootstrap). Map file extensions and top-level directories to a stack — `.go` files / `internal/` / `cmd/` → `go`; `.ts(x)` / `src/features/` / `src/pages/` → `frontend`.
+3. **Ambiguous.** If neither signal resolves cleanly, stop and report. A single chunk targets exactly one stack — cross-stack work splits into separate chunks linked by `Depends on`.
 
-Run the 9 stages in order. Maintain a status table internally: stage number, status (pending / running / done / failed), retry count. Every stage that invokes a skill runs inside an `Agent` subagent (default `subagent_type=general-purpose`). The Agent prompt invokes the named skill via the `Skill` tool, supplying the inputs that skill needs.
+### 0c. Load the pipeline from the stack's index
 
-### Stage 1 — Contracts (`write-interfaces`)
+Read `docs/engineering/<stack>/index.md`. Locate the `## Implementation pipeline` section. Read:
 
-Spawn Agent:
+- The pipeline-level constants (test command, format command, type-check command, OpenAPI regen command if listed).
+- The stage table (stage number, name, action, retry cap).
+- The test-freeze rule and the scope rule.
+- The final report pipeline label.
 
-> "Use the `write-interfaces` skill. Feature intent: \<intent\>. Working dir: \<working_dir\>. Interfaces to define: \<interfaces, formatted as name + package path + method signatures\>."
+If no `## Implementation pipeline` section exists in the index, stop and report the gap.
 
-Cap: 0 retries. On failure → stop and report.
+The index describes each stage as an engineering action — it does not name skills. The mapping from stage name to the skill that performs it lives in this orchestrator (see "Stage → skill mapping" below).
 
-### Stage 2 — Stub structs (`scaffold-stubs`)
+### 0d. Derive reusable values
 
-Spawn Agent:
+Compute these from the chunk's `files`:
 
-> "Use the `scaffold-stubs` skill. Working dir: \<working_dir\>. For each interface produced in stage 1, scaffold the implementing struct in its target package (per `files`), with constructor and one `panic('not implemented')` method per interface method."
+- `production_files` = files that don't match the stack's test-file patterns (the index's test-freeze rule defines those patterns).
+- `test_files` = files matching the test-file patterns.
+- `affected_paths` = unique directory paths from `files`, used by stages that scope test or type-check runs.
+- For stages with conditional preconditions (such as a Frontend pipeline's Stage 0 OpenAPI regen): evaluate the precondition. The index documents the precondition for each conditional stage.
 
-Cap: 0 retries. On failure → stop and report.
+## Stage → skill mapping
 
-### Stage 3 — Tests (`write-tests`)
+The index describes stages as engineering actions. Map them to skills as follows:
 
-Spawn Agent:
+| Stage name (from any stack's index) | Skill to invoke |
+|---|---|
+| Contracts | `write-interfaces` |
+| Stubs | `scaffold-stubs` |
+| Tests | `write-tests` |
+| Verify tests | `verify-tests` |
+| Implementation | `write-implementation` |
+| Verify logic | `verify-logic` |
+| Verify style | `verify-style` |
+| Run tests / Run tests + type-check / Format / OpenAPI regen | inline shell — use the pipeline-level command from the index, run via `Bash` from `working_dir`. No skill invoked. |
 
-> "Use the `write-tests` skill. Intent: \<intent\>. Working dir: \<working_dir\>. Files to test: \<production_files\>. Edge cases to cover: \<edge_cases\>. Implementation stubs currently panic('not implemented') — tests are expected to FAIL at runtime. Your job is to write tests that COMPILE; do not check that they pass."
+If a stack's index introduces a stage name not in this table, treat that as a contract mismatch — stop and report. Adding a stage means updating this mapping (and likely the harness's skill set).
 
-Cap: 0 retries. On failure → stop and report.
+## Pipeline dispatch
 
-### Stage 4 — Verify tests (`verify-tests`)
+Run the stages from the loaded pipeline in order. Maintain a status table internally: stage number, status (pending / running / done / skipped / failed), retry count.
 
-Spawn Agent:
+For each stage:
 
-> "Use the `verify-tests` skill. Test files to review: \<test_files\>. Implementation stubs still panic — that is expected. Audit structure, AAA layout, table-driven form, parallelism, mockery usage, and coverage against the edge cases. Do NOT check whether tests pass."
+- **Skill-backed stage.** Look up the skill in the mapping above. Spawn an `Agent` subagent (default `subagent_type=general-purpose`) whose prompt invokes that skill via the `Skill` tool and supplies the inputs the skill needs: chunk `intent`, `working_dir`, the relevant files from `production_files` / `test_files`, plus the stage's documented constraints from the index (e.g. "stubs panic — tests must compile but may fail at runtime", "test files are FROZEN", "production files do not exist yet").
+- **Shell-backed stage.** Run the pipeline-level command from the index via `Bash` from `working_dir`.
+- **Conditional stage.** Evaluate the precondition documented in the index. If false, mark the stage `skipped` and continue.
+- **Loop stages.** Some stages are loops with their own retry cap (verify steps, run-tests, format/verify-style). The index describes the loop body. Honour the documented cap. On final failure within the cap, stop and report.
 
-If verdict is clean → continue.
-
-If verdict has violations → spawn `write-tests` Agent with the verify-tests findings prepended to the original Stage 3 prompt, then re-run verify-tests. Cap: 1 retry. On final failure → stop and report.
-
-### Stage 5 — Implementation (`write-implementation`)
-
-Spawn Agent:
-
-> "Use the `write-implementation` skill. Working dir: \<working_dir\>. Files: \<files\>. Intent: \<intent\>. Dependencies: \<dependencies or 'none'\>. Notes: \<notes or 'none'\>. CONSTRAINT: Test files (`_test.go`) are FROZEN — do not open, modify, or write any test file. Goal: replace `panic('not implemented')` stubs with real logic that makes the existing tests pass. If \<prd_path\> is provided and the spec design is ambiguous, you may consult it as a secondary reference for the original intent. Do NOT redesign based on PRD — read it only to resolve genuine ambiguity in the spec."
-
-Cap: 0 retries at this stage. Retries happen via stage 6 and stage 7 loops below.
-
-### Stage 6 — `go test` (inline)
-
-Scope the run to `affected_packages` (derived in Step 0 from `files`). Run from `working_dir`:
-
-```
-go test ./<pkg1>/... ./<pkg2>/...
-```
-
-One invocation covering all affected packages. Do not run `./...` for the whole module — that wastes time on unrelated tests and noises up the output.
-
-If tests pass → continue to Stage 7.
-
-If tests fail → spawn an ad-hoc debug-failing-tests Agent (not a named skill — a one-off Agent with this prompt):
-
-> "Diagnose and fix failing tests for this change in `<working_dir>`. CONSTRAINT: you may only modify production code. Do NOT modify any `_test.go` file under any circumstances. If the only correct fix would require changing a test, stop and report — do not attempt the change.
->
-> `go test` output:
-> \<full output verbatim\>"
-
-Re-run `go test` after the Agent returns. Cap: 2 retries. On final failure → stop and report.
-
-### Stage 7 — Verify logic (`verify-logic`)
-
-Spawn Agent:
-
-> "Use the `verify-logic` skill. Intent: \<intent\>. Files: \<production_files\>."
-
-If verdict is pass → continue.
-
-If verdict is fail → spawn `write-implementation` Agent with the same prompt as Stage 5 plus the verify-logic findings prepended. **The test-freeze constraint must be included verbatim.** Then re-run Stage 6 (`go test`) and Stage 7 (`verify-logic`). Cap: 1 retry. On final failure → stop and report.
-
-### Stage 8 — Format (inline)
-
-Run from `working_dir`:
-
-```
-make format
-```
-
-If exit code is 0 → continue.
-
-If non-zero → stop and report the verbatim output.
-
-### Stage 9 — Verify style (`verify-style`)
-
-Spawn Agent:
-
-> "Use the `verify-style` skill. Context: \<intent\>. Files: \<production_files\>."
-
-If verdict is clean → pipeline complete.
-
-If verdict has violations → spawn an ad-hoc fix-style Agent (this is not a named skill — it is a one-off Agent prompted to apply the violations table):
-
-> "Fix the following style/structure/dependency violations in the listed files. Each row has File:Line, Category, Rule, Violation, and Suggested Fix — apply each fix exactly. CONSTRAINTS: do NOT modify `_test.go` files; do NOT expand scope beyond files listed in the violations table. After fixing, run `make format` in `<working_dir>`. Report when done.
->
-> Violations:
-> \<verify-style table verbatim\>"
-
-Re-run `verify-style` after the Agent returns. Cap: 1 retry. On final failure → stop and report both the latest violations and the fix Agent's report.
-
-## Failure handling — general
+### Failure handling — general
 
 - **Past cap → stop.** Surface the last failure output to the user along with the stage name. The user decides whether to retry manually, amend the spec, or abandon.
-- **Test-freeze constraint propagates.** Every Agent that touches production code in retry loops (Stage 6 debug, Stage 7 retry, Stage 9 fix) must include the test-freeze instruction verbatim.
-- **Never edit code yourself.** The orchestrator only spawns subagents and runs `go test` / `make format`. No `Edit` or `Write` tool calls from the orchestrator's own context against production files.
-- **Never expand `files`.** If a subagent reports it needs to touch a file not in `files`, that is a spec gap — escalate to the user, do not silently widen scope.
+- **Test-freeze constraint propagates.** Whenever a retry / debug / fix Agent touches production code, include the stack's test-freeze rule (from the index) verbatim in its prompt. Without it the agent may edit tests to make them pass — a failure mode the pipeline exists to prevent.
+- **Never edit code yourself.** The orchestrator spawns subagents and runs the index's inline shell commands. No `Edit` or `Write` tool calls from the orchestrator's own context against production files.
+- **Never expand `files`.** If a subagent reports it needs to touch a file outside the chunk's `files` list, that is a spec gap — escalate, do not silently widen scope.
 
 ## Final report
 
@@ -168,19 +118,12 @@ When the pipeline ends (success or stop-on-failure), output:
 ```
 ## implement-feature: <first line of intent>
 
+Pipeline: <stack name from the index, e.g. Go | Frontend>
 Verdict: PASS | FAIL — <stage that stopped, if FAIL>
 
-| # | Stage              | Status | Notes |
-|---|--------------------|--------|-------|
-| 1 | Contracts          | ✓ / ✗  | <files created>                |
-| 2 | Stubs              | ✓ / ✗  | <files created>                |
-| 3 | Tests              | ✓ / ✗  | <files created>                |
-| 4 | Verify tests       | ✓ / ✗  | <violations / clean>           |
-| 5 | Implementation     | ✓ / ✗  | <files modified>               |
-| 6 | go test            | ✓ / ✗  | <pass / N failures>            |
-| 7 | Verify logic       | ✓ / ✗  | <matches intent / N issues>    |
-| 8 | Format             | ✓ / ✗  | <clean / output>               |
-| 9 | Verify style       | ✓ / ✗  | <violations / clean>           |
+| # | Stage              | Status              | Notes |
+|---|--------------------|---------------------|-------|
+| <one row per stage in the pipeline, in order; status ∈ {✓, ✗, skipped} > |
 
 Files created / modified:
 - <one per line>
@@ -189,13 +132,15 @@ Blocking issues (if FAIL):
 - <one per line>
 ```
 
+The exact stage list comes from the index — do not hardcode it here. The status column uses `✓` for success, `✗` for failure, `skipped` for conditional stages whose precondition didn't hold.
+
 ## Anti-patterns
 
+- **Hardcoding pipeline stages in this skill body.** The pipeline lives in the index. If you find yourself listing stages here, you're drifting from the design.
 - **Editing code directly.** The orchestrator spawns subagents; it never opens production files itself.
-- **Skipping stages.** Every stage runs in order. Skipping `verify-tests` means tests are not vetted; skipping `verify-style` means style debt accumulates.
-- **Running stages out of order.** The order is fixed: contracts → stubs → tests → verify-tests → implement → go test → verify-logic → format → verify-style. Implementing before tests means tests rubber-stamp the implementation.
-- **Expanding scope.** The `files` list is the boundary. If a subagent needs a file not in `files`, escalate.
-- **Looping past caps.** The retry caps are explicit. Past cap → stop.
-- **Calling `review-changes`.** It runs at the feature-workflow level (after all chunks are done), not per-chunk. Calling it here would duplicate work and dilute its feature-wide view. If a final human-style review is wanted, `feature-workflow` or the user invokes `/review-changes` after this orchestrator finishes.
+- **Skipping stages.** Every stage runs in order unless the index marks it conditional.
+- **Running stages out of order.** The order in the index is the order of execution. Implementing before tests means tests rubber-stamp the implementation.
+- **Looping past caps.** The retry caps are explicit in the index. Past cap → stop.
+- **Calling `review-changes`.** It runs at the feature-workflow level (after all chunks are done), not per-chunk. Calling it here duplicates work and dilutes its feature-wide view.
 - **Treating the spec as advisory.** The spec is the contract. Do not redesign mid-flow.
 - **Writing back to `spec.md`.** This skill is pure execution. It reads from `spec.md` in Mode A but never writes there. The Agent / parent that invoked this skill is responsible for updating the chunk's Status row after the pipeline returns.
