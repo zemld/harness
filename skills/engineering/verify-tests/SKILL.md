@@ -1,6 +1,6 @@
 ---
 name: verify-tests
-description: Review test files for convention violations and report them as a table. The conventions per stack live in the docs listed by `docs/engineering/<stack>/index.md` Verify-tests section; this skill detects the stack and audits against those docs. Use whenever the user asks to "verify tests", "check my tests", "review tests", "проверь тесты", "do my tests follow conventions?", "are these tests correct?", or whenever tests have just been written and need a quality check.
+description: Reviews test files for convention violations and reports them as a table. The conventions per stack live in the docs listed by `docs/engineering/<stack>/index.md` Verify-tests section; this skill detects the stack and audits against those docs. Use whenever the user asks to "verify tests", "check my tests", "review tests", "проверь тесты", "do my tests follow conventions?", "are these tests correct?", or whenever tests have just been written and need a quality check.
 ---
 
 Review test files against the project's testing conventions and surface every violation in a structured table. Read-only — never modify any file.

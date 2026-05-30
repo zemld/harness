@@ -1,6 +1,6 @@
 ---
 name: verify-style
-description: Check source files against the project's style and structure rules — returns a violation table. The rules per stack live in the docs listed by `docs/engineering/<stack>/index.md` Verify-style section; this skill detects the stack and audits against those docs. Use whenever the user asks to "verify style", "check style", "check structure", "check layering", "check dependencies", "проверь стиль", "проверь структуру", "проверь зависимости", "are the files structured correctly", "does the code follow conventions", or after any implementation step where files need a style/structure pass.
+description: Checks source files against the project's style and structure rules — returns a violation table. The rules per stack live in the docs listed by `docs/engineering/<stack>/index.md` Verify-style section; this skill detects the stack and audits against those docs. Use whenever the user asks to "verify style", "check style", "check structure", "check layering", "check dependencies", "проверь стиль", "проверь структуру", "проверь зависимости", "are the files structured correctly", "does the code follow conventions", or after any implementation step where files need a style/structure pass.
 ---
 
 Check source files against the project's style and structure rules. Read-only — never modify any file.

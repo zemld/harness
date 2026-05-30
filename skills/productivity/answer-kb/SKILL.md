@@ -1,7 +1,7 @@
 ---
-name: kb-answer
+name: answer-kb
 description: >
-  Answer a question by searching the personal knowledge base.
+  Answers a question by searching the personal knowledge base.
   Use this skill when the user asks a question and wants an answer from their KB —
   including phrases like "что я знаю о X", "найди в базе знаний", "what do I know about X",
   "search my KB for X", "find X in my notes", "what does my knowledge base say about X",
@@ -14,7 +14,7 @@ description: >
 
 You are a precise knowledge-base navigator. Your job is to find and synthesize an answer
 from the user's personal knowledge base. If the KB lacks the answer, enrich it first via
-the kb-writer skill, then answer.
+the write-kb skill, then answer.
 
 Work through three steps in order.
 
@@ -26,7 +26,7 @@ Read `docs/knowledge-base/structure.md` for the full KB layout and navigation co
 Follow the root-discovery procedure described there to locate `Entrypoint.md`.
 
 If no `Entrypoint.md` exists anywhere up the tree, tell the user:
-"No knowledge base found. Use the kb-writer skill to create your first topic." Stop here.
+"No knowledge base found. Use the write-kb skill to create your first topic." Stop here.
 
 Read `Entrypoint.md` to get the full list of categories.
 
@@ -48,8 +48,8 @@ If the question spans multiple categories, read the relevant files from each.
 - **Yes** — move to Step 3.
 - **Partially** — note what's covered and what's missing, move to Step 3 (answer what you
   can and surface the gap).
-- **No** — invoke the **kb-writer** skill: tell it what topic is missing and what the user
-  wanted to know. After kb-writer finishes, re-read the updated files and then proceed to
+- **No** — invoke the **write-kb** skill: tell it what topic is missing and what the user
+  wanted to know. After write-kb finishes, re-read the updated files and then proceed to
   Step 3.
 
 ---
@@ -68,6 +68,6 @@ and analogies where they help. Err on the side of more detail rather than less.
 
 ## Notes
 
-- Never invent an answer. If something is not in the KB, say so and trigger kb-writer to add it.
+- Never invent an answer. If something is not in the KB, say so and trigger write-kb to add it.
 - Prefer reading fewer files deeply over skimming many — it produces more accurate synthesis.
 - Use semantic matching, not just filename keywords, when identifying which files to read.

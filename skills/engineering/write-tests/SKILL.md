@@ -1,6 +1,6 @@
 ---
 name: write-tests
-description: Write tests for the given logic. The test conventions per stack live in the docs listed by `docs/engineering/<stack>/index.md` Write-tests section; this skill detects the stack and writes tests per those docs. Use when the user asks to write tests, add tests, cover code with tests, or test a specific function/method/component/hook.
+description: Writes tests for the given logic. The test conventions per stack live in the docs listed by `docs/engineering/<stack>/index.md` Write-tests section; this skill detects the stack and writes tests per those docs. Use when the user asks to write tests, add tests, cover code with tests, or test a specific function/method/component/hook. Also trigger proactively after any implementation step — if code was just written and no tests exist for it yet, this skill should run next.
 ---
 
 Spawn a single subagent and hand it the intent plus the instructions below. Do not execute any of these steps inline — delegate everything to the subagent.

@@ -1,5 +1,11 @@
 # Go Testing Conventions
 
+## Contents
+- Framework
+- Structure
+- Mocks
+- Example
+
 ## Framework
 
 Use [testify](https://github.com/stretchr/testify): `require` for assertions that must stop the test on failure, `assert` for non-fatal checks that let the test continue.

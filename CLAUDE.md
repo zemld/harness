@@ -42,3 +42,51 @@ The `description` field is the trigger signal. Make it specific enough that Clau
 ## Docs
 
 `docs/` is the single source of truth for conventions and practices. When a skill or CLAUDE.md needs to reference a rule, link to the relevant doc instead of duplicating it.
+
+## Feature workflow
+
+Features are designed and implemented iteratively, one subtask at a time, with file-based state under `<working_dir>/features/<feature-slug>/`:
+
+```
+<working_dir>/features/<feature-slug>/
+├── PRD.md           # top-level: problem, success criteria, ## Architecture, ## Subtasks checklist
+├── decisions.md     # append-only log of cross-subtask decisions
+└── subtasks/
+    ├── 01-<slug>.md       # sub-PRD: detailed design of one checklist item
+    ├── 01.01-<slug>.md    # recursive sub-PRD (decomposition of 01)
+    └── ...
+```
+
+The directory is checked into git; it travels with the code change and is removed after merge.
+
+### Single entry point
+
+`write-prd` is the only skill that drives feature design. It runs in two modes:
+
+- **No argument** → top-level mode: writes `PRD.md` for a new feature (grills, captures, fixes `## Architecture` and the subtask checklist).
+- **Path + `#<id>` argument** (e.g. `features/foo/PRD.md#02`) → sub-PRD mode: writes `subtasks/<id>-<slug>.md` for one checklist item, inheriting architecture from the parent.
+
+Recursion (a sub-PRD that itself needs decomposition) is started by the user in a fresh session: `write-prd subtasks/02-x.md#02.01`. Hierarchical IDs (`01`, `01.01`, `02`) keep the flat `subtasks/` layout searchable.
+
+Schemas for every file the workflow produces live with the skill — see `skills/engineering/write-prd/references/{prd-schema,sub-prd-schema,decisions-schema}.md`.
+
+### One subtask cycle (manual)
+
+For each item in the top-level PRD's checklist, the user runs a fresh session:
+
+1. Open the subtask: `write-prd features/<slug>/PRD.md#<id>` — produces `subtasks/<id>-<slug>.md`.
+2. Read the sub-PRD. If it is still too large, recurse: `write-prd subtasks/<id>-<slug>.md#<sub-id>` in another fresh session. Otherwise, implement.
+3. Implement: `implement-feature` with `spec_path=<sub-PRD path>`, `chunk_id=<id>` (Mode A — it reads the sub-PRD's `## Chunk <id>` section directly).
+4. Tick the matching `[ ]` → `[x]` in the parent PRD's `## Subtasks` checklist.
+5. If a cross-subtask insight came up, append an entry to `decisions.md` using the template in `references/decisions-schema.md`.
+6. Run `review-changes` against the sub-PRD's intent.
+7. Run the stack's Definition of Done: tests, format, OpenAPI regen, infra updates as applicable. Per-stack details live in `docs/engineering/<stack>/index.md`.
+
+### Closing the feature
+
+After every checklist item is ticked:
+
+- Read the top-level PRD; confirm `## Architecture > Invariants` still hold against the actual code.
+- Run `verify-logic` on the key entry points (PRD's success criteria).
+- Run the full Definition of Done across the feature, not just per-subtask.
+- Delete `features/<feature-slug>/` before merging the PR — it has served its purpose and would only add noise to future diffs.

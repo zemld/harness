@@ -1,5 +1,12 @@
 # Frontend Dependencies
 
+## Contents
+- Runtime
+- Styling
+- Build tooling
+- Testing
+- Tooling
+
 Every library pinned in `stack.md`, grouped by concern. Each section names the npm package and a one-paragraph reason. Replace nothing without updating `stack.md` first.
 
 ## Runtime

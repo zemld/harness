@@ -1,6 +1,6 @@
 ---
 name: write-interfaces
-description: Define the Go contracts for a new service flow — domain entities, incoming service interface, and outgoing port interfaces (repository, client). Use at the start of any Go feature implementation before writing tests or concrete code. Trigger when the user says "write interfaces", "define the domain model", "scaffold contracts for X", "create Go types for this feature", "добавь интерфейсы", "создай доменные модели", or any time a Go service feature is being started and no contracts exist yet. Also trigger when explicitly asked to scaffold the interface layer for an existing service that is missing it.
+description: Defines the Go contracts for a new service flow — domain entities, incoming service interface, and outgoing port interfaces (repository, client). Use at the start of any Go feature implementation before writing tests or concrete code. Trigger when the user says "write interfaces", "define the domain model", "scaffold contracts for X", "create Go types for this feature", "добавь интерфейсы", "создай доменные модели", or any time a Go service feature is being started and no contracts exist yet. Also trigger when explicitly asked to scaffold the interface layer for an existing service that is missing it.
 ---
 
 # Write Interfaces

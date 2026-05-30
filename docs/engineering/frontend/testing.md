@@ -1,5 +1,13 @@
 # Frontend Testing Conventions
 
+## Contents
+- Frameworks
+- Structure
+- Mocks
+- Coverage targets
+- Example — component test
+- Example — Playwright spec
+
 ## Frameworks
 
 **Unit and component tests:** [Vitest](https://vitest.dev) with [React Testing Library](https://testing-library.com/docs/react-testing-library/intro). One test config (`vitest.config.ts`) sharing Vite's resolver and plugins.

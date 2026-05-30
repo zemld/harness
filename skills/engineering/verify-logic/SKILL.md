@@ -1,6 +1,6 @@
 ---
 name: verify-logic
-description: Verify that implemented code matches its intent — supply an intent description + file paths, the skill spawns an analysis subagent and returns a table of discrepancies. Trigger when the user explicitly asks to "verify the logic", "проверь логику реализации", "verify logic of these files", "does this code match the intent", "check if the implementation matches what was described", "check that this code does what I described". This is a read-only diagnostic skill: it never modifies code. Do NOT use for style/format checks. Do NOT use for test-quality review.
+description: Verifies that implemented code matches its intent — supply an intent description + file paths, the skill spawns an analysis subagent and returns a table of discrepancies. Trigger when the user explicitly asks to "verify the logic", "проверь логику реализации", "verify logic of these files", "does this code match the intent", "check if the implementation matches what was described", "check that this code does what I described". This is a read-only diagnostic skill: it never modifies code. Do NOT use for style/format checks. Do NOT use for test-quality review.
 ---
 
 # Verify Logic

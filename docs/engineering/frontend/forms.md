@@ -1,5 +1,12 @@
 # Forms
 
+## Contents
+- Schema placement
+- Form component pattern
+- Mapping server validation errors
+- Submission feedback
+- Field components
+
 Every form in the app follows the same pattern: a Zod schema is the single source of truth for shape and validation, React Hook Form binds the schema to inputs, and submission failures are mapped back into form state instead of toasted away.
 
 ## Schema placement

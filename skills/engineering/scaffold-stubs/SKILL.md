@@ -1,6 +1,6 @@
 ---
 name: scaffold-stubs
-description: Create empty Go struct files implementing a set of interfaces, with constructor and one stub method per interface method whose body is exactly `panic("not implemented")`. Use immediately after `write-interfaces` to give the next stage (tests) something to compile against. Trigger on "scaffold stubs", "create stub structs", "make panic skeletons", "сделай заглушки", "набросай скелеты структур".
+description: Creates empty Go struct files implementing a set of interfaces, with a constructor and one stub method per interface method whose body is exactly `panic("not implemented")`. Use immediately after `write-interfaces` to give the next stage (tests) something to compile against. Trigger on "scaffold stubs", "create stub structs", "make panic skeletons", "сделай заглушки", "набросай скелеты структур".
 ---
 
 Create the concrete struct files that implement contracts produced by `write-interfaces`. Each struct contains only its definition, its constructor, and one stub method per interface method — never any real logic.

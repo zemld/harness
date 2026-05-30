@@ -1,6 +1,6 @@
 ---
 name: review-changes
-description: Review uncommitted changes against a stated intent and the repository's standards. Use when the user asks to review changes, check work before commit, mentions "review" / "ревью" / "проверь изменения", or provides context like "I was implementing X — check if it's done right". Trigger even when the user says "посмотри что я сделал", "check my changes", or describes a feature and asks if it looks right.
+description: Reviews uncommitted changes against a stated intent and the repository's standards. Use when the user asks to review changes, check work before commit, mentions "review" / "ревью" / "проверь изменения", or provides context like "I was implementing X — check if it's done right". Trigger even when the user says "посмотри что я сделал", "check my changes", or describes a feature and asks if it looks right.
 ---
 
 Review the user's uncommitted work by running three verification checks in parallel — logic against intent, code style, and test quality — then aggregate the results.

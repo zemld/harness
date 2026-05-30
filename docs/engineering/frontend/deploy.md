@@ -1,5 +1,13 @@
 # Frontend Deploy
 
+## Contents
+- Dockerfile
+- nginx.conf
+- Build-time vs runtime config
+- Integration with `infra/testing`
+- Integration with `infra/production`
+- CI build
+
 A frontend ships as a Docker image: a static bundle produced by Vite and served by nginx. The image slots into the same `infra/` layout used by Go services — no external host (Vercel, Netlify) is involved.
 
 ## Dockerfile

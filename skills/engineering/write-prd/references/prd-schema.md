@@ -1,6 +1,13 @@
 # `PRD.md` schema — file format
 
-`PRD.md` captures the **why** of a feature: the problem, the users, the success criteria, the constraints. It is the product document — what the feature must accomplish and for whom — kept separate from `spec.md`, which describes how it is built.
+## Contents
+- Location
+- Full template
+- Field-by-field meaning
+- Rules for filling in PRD.md
+- Example — small feature
+
+`PRD.md` is the top-level document for a feature. It captures **why** the feature exists (problem, users, success criteria, constraints) and **how it is laid out globally** (architecture, data flow, invariants). The checklist at the end is the index of subtasks that decompose the feature.
 
 This file documents the layout. Section headings are stable; anything that reads or writes `PRD.md` parses by exact heading.
 
@@ -9,10 +16,22 @@ This file documents the layout. Section headings are stable; anything that reads
 `PRD.md` lives at:
 
 ```
-<working_dir>/.feature-plans/<feature-slug>/PRD.md
+<working_dir>/features/<feature-slug>/PRD.md
 ```
 
-`<working_dir>` is the project root the feature targets. `<feature-slug>` is a kebab-case identifier derived from the feature name. `spec.md` is a sibling in the same directory.
+`<working_dir>` is the project root the feature targets. `<feature-slug>` is a kebab-case identifier derived from the feature name. `decisions.md` and the `subtasks/` directory are siblings in the same directory:
+
+```
+<working_dir>/features/<feature-slug>/
+├── PRD.md
+├── decisions.md
+└── subtasks/
+    ├── 01-<slug>.md
+    ├── 01.01-<slug>.md
+    └── ...
+```
+
+The whole directory is checked into git, removed after merge.
 
 ## Full template
 
@@ -56,6 +75,28 @@ Each criterion must be checkable — either by code, by a metric, or by user obs
 - <constraint>
 - <constraint>>
 
+## Architecture
+<Mandatory section. Two parts:
+
+**Structure** — which projects, services, modules, or layers the feature touches and how they relate. 1–2 paragraphs naming the components and where each lives. A mermaid diagram if the relationships are non-trivial.
+
+**Data flow** — how data moves through those components from trigger to result. Numbered steps or a sequence diagram.
+
+**Invariants** — single-line statements every subtask must preserve. Examples: "domain entity X stays immutable after creation", "no synchronous DB calls in the request handler", "RPC contract Y is append-only".>
+
+## Subtasks
+<Checklist of subtasks the feature decomposes into. Each item:
+- One line, descriptive. Hierarchical numbering matches subtasks/ filenames (01, 01.01, 02, …).
+- Unchecked `[ ]` initially, ticked `[x]` after the subtask is implemented and reviewed.
+- Nested items represent recursive decomposition: a parent subtask spawned its own sub-PRD with its own subtasks.
+
+Example:
+- [ ] 01 — Domain types for X
+- [ ] 02 — Service layer
+  - [ ] 02.01 — Save operation
+  - [ ] 02.02 — Lookup operation
+- [ ] 03 — REST handler>
+
 ## Open questions
 <Things that came up during discovery but were deferred:
 - <question>
@@ -72,14 +113,16 @@ Each criterion must be checkable — either by code, by a metric, or by user obs
 - **`Non-functional requirements`** — perf (latency, throughput), scale (RPS, data volume), security (auth, audit), compatibility (backwards compat with X version).
 - **`Out of scope`** — explicit boundary. Used downstream to reject scope creep.
 - **`Constraints`** — fixed conditions that cannot be traded away. Hard deadlines, platform restrictions, mandatory dependencies.
+- **`Architecture`** — the structural anchor shared by every subtask. Without it, sub-PRDs written later have no consistent ground to stand on and risk drifting from each other. The Invariants list is the contract every sub-PRD must inherit explicitly.
+- **`Subtasks`** — index of decomposition. The numbering scheme is the same one used for `subtasks/<id>.md` filenames. The list also doubles as the progress tracker: ticking items is the manual close-out signal.
 - **`Open questions`** — things surfaced during discovery but not resolved. May be answered later; serve as flags for downstream consumers to revisit if a design decision exposes them.
 
 ## Rules for filling in PRD.md
 
 1. **The PRD is a record of the discovery conversation, not a wish list.** Do not invent fields. If a section was not discussed, leave it as `(not discussed)` rather than guessing.
-2. **Confirm with the human before downstream consumers read it.** Once written, show the file; let the human edit; only then move on.
-3. **Do not include tech-spec material.** PRD.md says "must handle 1k RPS"; spec.md says "uses Redis with two-second TTL." Keep the boundary clean.
-4. **No code, no signatures, no file paths.** This is the product document, not the design.
+2. **`Architecture` is not optional.** If the conversation has not landed on enough structural commitment to fill it, the PRD is not ready — return to the interview.
+3. **Confirm with the human before downstream consumers read it.** Once written, show the file; let the human edit; only then move on.
+4. **`Subtasks` numbering is stable.** Once `01` is assigned, that number never points to anything else. New items get fresh numbers; removed items leave a gap.
 5. **Open questions stay open.** If something was deferred, list it under Open questions. Downstream consumers may answer them or surface them again — the PRD itself does not force resolution.
 
 ## Example — small feature
@@ -117,6 +160,18 @@ Internal: the dedupe pipeline. Indirect: end users who see duplicate perfume ent
 
 ## Constraints
 - Go standard library only — no third-party deps.
+
+## Architecture
+**Structure.** Single pure helper in `internal/utils/canonization/canonize_perfume_name.go`. No new package boundaries, no new dependencies — sits inside the existing `utils/canonization` package next to similar helpers.
+
+**Data flow.** Caller passes `string` → helper returns canonized `string` synchronously, no I/O.
+
+**Invariants.**
+- Pure: same input always produces same output, no global state.
+- No allocation beyond what `strings.ToLower` and `strings.Fields` already do.
+
+## Subtasks
+- [ ] 01 — CanonizePerfumeName helper + tests
 
 ## Open questions
 - (not discussed)

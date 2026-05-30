@@ -1,7 +1,7 @@
 ---
-name: kb-writer
+name: write-kb
 description: >
-  Research a topic and write structured Markdown notes into a local knowledge base.
+  Researches a topic and writes structured Markdown notes into a local knowledge base.
   Use this skill whenever the user wants to add a topic, concept, section, or
   category to their knowledge base — including phrases like "добавь тему X",
   "напиши про X в базу знаний", "запиши про X", "хочу заметку о X",

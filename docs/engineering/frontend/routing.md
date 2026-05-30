@@ -1,5 +1,14 @@
 # Routing
 
+## Contents
+- Where the route table lives
+- Pages
+- Loaders
+- Auth guards
+- Error boundaries
+- Layout routes
+- URL state
+
 React Router v7's data-router API (`createBrowserRouter` with route objects) is the only routing pattern used. The legacy `<Routes>` / `<Route>` JSX API is forbidden — it has no `loader`, no `errorElement`, and no way to express auth guards declaratively.
 
 ## Where the route table lives

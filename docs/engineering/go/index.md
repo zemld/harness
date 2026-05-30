@@ -4,28 +4,28 @@ This file routes generic skills to the rule-bearing docs that apply for a given 
 
 Sibling rule docs in this directory:
 
-- `service-structure.md` — layers, layout, interface segregation, transactions.
-- `style.md` — function size, nesting, parameter count, early returns, comment policy.
-- `testing.md` — table-driven, parallel, AAA, mockery v3.
-- `dependencies.md` — which library to use for each concern.
+- [service-structure.md](./service-structure.md) — layers, layout, interface segregation, transactions.
+- [style.md](./style.md) — function size, nesting, parameter count, early returns, comment policy.
+- [testing.md](./testing.md) — table-driven, parallel, AAA, mockery v3.
+- [dependencies.md](./dependencies.md) — which library to use for each concern.
 
 ## Scaffold project
 
 Read:
 
-- `service-structure.md` — canonical layout the scaffold must produce.
-- `dependencies.md` — libraries that must be pinned in `go.mod`.
+- [service-structure.md](./service-structure.md) — canonical layout the scaffold must produce.
+- [dependencies.md](./dependencies.md) — libraries that must be pinned in `go.mod`.
 
 Conventions a fresh Go service must satisfy:
 
 - **Inputs the scaffold consumes:** service name (kebab-case), Go module path (full, e.g. `github.com/org/project/user-service`), output directory, transport choice (`rest`, `grpc`, or `both` — `both` by default).
-- **Top-level layout** (per `service-structure.md`): `cmd/`, `internal/{domain,services,adapters,ports,app,api}/`, `api/openapi.yaml` (for REST), `mocks/`, `infra/`.
+- **Top-level layout** (per [service-structure.md](./service-structure.md)): `cmd/`, `internal/{domain,services,adapters,ports,app,api}/`, `api/openapi.yaml` (for REST), `mocks/`, `infra/`.
 - **Required files at the service root:** `go.mod`, `Makefile` (must define a `format` target), `.golangci.yml`, `.mockery.yml`.
 - **Required boilerplate files:**
-  - `internal/domain/errors.go` (the only domain file the scaffold seeds; entity types are added later per the scoping rule in `service-structure.md`).
+  - `internal/domain/errors.go` (the only domain file the scaffold seeds; entity types are added later per the scoping rule in [service-structure.md](./service-structure.md)).
   - `internal/app/app.go` (DI wiring stub — the only place that may import concrete adapter types).
   - One placeholder service package + one placeholder repository package that demonstrate the one-operation-per-file rule and let the project compile from day one.
-- **Post-scaffold hand-off conventions:** the placeholder packages must be renamed by the user to their domain (`example` → `<domain>`), all import paths and the `var _ Interface = (*Impl)(nil)` compile-time checks updated, real entities added per `service-structure.md`, `internal/app/app.go` wired, mocks registered in `.mockery.yml` then generated via `mockery` (never by hand), and infra entries added under `infra/testing/docker-compose.yaml` + `infra/production/k8s/` if the service joins an existing project.
+- **Post-scaffold hand-off conventions:** the placeholder packages must be renamed by the user to their domain (`example` → `<domain>`), all import paths and the `var _ Interface = (*Impl)(nil)` compile-time checks updated, real entities added per [service-structure.md](./service-structure.md), `internal/app/app.go` wired, mocks registered in `.mockery.yml` then generated via `mockery` (never by hand), and infra entries added under `infra/testing/docker-compose.yaml` + `infra/production/k8s/` if the service joins an existing project.
 
 The runner that produces this layout is the responsibility of the scaffolding skill; this index does not prescribe its implementation.
 
@@ -33,9 +33,9 @@ The runner that produces this layout is the responsibility of the scaffolding sk
 
 Read:
 
-- `service-structure.md` — file placement, layering, one-operation-per-file rule, transaction wrapper for repository writes.
-- `style.md` — function size, nesting, parameter count, no flag args.
-- `dependencies.md` — allowed libraries per concern; do not introduce a substitute without updating this doc first.
+- [service-structure.md](./service-structure.md) — file placement, layering, one-operation-per-file rule, transaction wrapper for repository writes.
+- [style.md](./style.md) — function size, nesting, parameter count, no flag args.
+- [dependencies.md](./dependencies.md) — allowed libraries per concern; do not introduce a substitute without updating this doc first.
 
 Layered walk (deepest first, skip layers not in the chunk's `files`):
 
@@ -51,8 +51,8 @@ Build check: `go build ./...` from the service root. Do not run `go test` — th
 
 Read:
 
-- `testing.md` — every rule is authoritative (table-driven, `t.Parallel()`, AAA, mockery v3).
-- `service-structure.md` — for the test-file co-location rule (tests live next to the code they test, in the `_test` external package).
+- [testing.md](./testing.md) — every rule is authoritative (table-driven, `t.Parallel()`, AAA, mockery v3).
+- [service-structure.md](./service-structure.md) — for the test-file co-location rule (tests live next to the code they test, in the `_test` external package).
 
 Per public method: one `TestXxx` function, table-driven even for a single case. AAA with blank lines between Arrange / Act / Assert. `require` for fatal assertions, `assert` for non-fatal. Mocks generated by `mockery`; if a needed mock doesn't exist yet, state which interface needs a `mockery` re-run and stop.
 
@@ -60,35 +60,35 @@ Per public method: one `TestXxx` function, table-driven even for a single case. 
 
 Read:
 
-- `style.md` — categories: function size, nesting depth, parameter count, return-value count, flag args, early returns, comment policy.
-- `service-structure.md` — categories: `service.go`/`repository.go` minimality, one-operation-per-file, domain entity scoping, interface naming (no stutter), `utils/` minimality, layering (`domain/` has no `internal/` imports, `services/` imports only from `domain/` and `ports/`, only `app.go` imports concretes).
+- [style.md](./style.md) — categories: function size, nesting depth, parameter count, return-value count, flag args, early returns, comment policy.
+- [service-structure.md](./service-structure.md) — categories: `service.go`/`repository.go` minimality, one-operation-per-file, domain entity scoping, interface naming (no stutter), `utils/` minimality, layering (`domain/` has no `internal/` imports, `services/` imports only from `domain/` and `ports/`, only `app.go` imports concretes).
 
 Categories for the violation table:
 
-- **Style** — rules from `style.md`.
-- **Structure** — file/package layout rules from `service-structure.md`.
-- **Dependency** — layering rules from `service-structure.md`.
+- **Style** — rules from [style.md](./style.md).
+- **Structure** — file/package layout rules from [service-structure.md](./service-structure.md).
+- **Dependency** — layering rules from [service-structure.md](./service-structure.md).
 
 ## Verify tests
 
 Read:
 
-- `testing.md` — every rule is authoritative.
+- [testing.md](./testing.md) — every rule is authoritative.
 
-For each `TestXxx` in each `_test.go` file, check against every rule in `testing.md`.
+For each `TestXxx` in each `_test.go` file, check against every rule in [testing.md](./testing.md).
 
 ## Refactor project
 
-Read every rule doc in this directory: `service-structure.md`, `style.md`, `testing.md`, `dependencies.md`.
+Read every rule doc in this directory: [service-structure.md](./service-structure.md), [style.md](./style.md), [testing.md](./testing.md), [dependencies.md](./dependencies.md).
 
 Audit the entire service (every `.go` file, plus `go.mod`, `Makefile`, `.golangci.yml`, `.mockery.yml`, `api/openapi.yaml`). For each violation record one row in the relevant category table.
 
 Categories:
 
-- **Structure** — `service-structure.md` rules on file/package layout.
-- **Dependency** — `service-structure.md` rules on layering.
-- **Style** — `style.md`.
-- **Testing** — `testing.md`.
+- **Structure** — [service-structure.md](./service-structure.md) rules on file/package layout.
+- **Dependency** — [service-structure.md](./service-structure.md) rules on layering.
+- **Style** — [style.md](./style.md).
+- **Testing** — [testing.md](./testing.md).
 - **Transaction** — repository writes wrap all operations in a single `pgx` transaction (CLAUDE.md rule).
 - **Tooling** — `.golangci.yml` exists; `.mockery.yml` exists if mocks are present; `Makefile` has a `format` target.
 
@@ -120,12 +120,12 @@ Stages:
 | 1 | Contracts | Define every interface and domain type the chunk introduces or consumes — package paths, method signatures, entity fields. | 0 |
 | 2 | Stubs | Scaffold the implementing structs for each interface in their target package, with constructor and one `panic("not implemented")` method per interface method. | 0 |
 | 3 | Tests | Write tests for the production code. Constraint: stubs panic — tests must compile, runtime failure is expected at this stage. | 0 |
-| 4 | Verify tests | Audit the tests for convention compliance per `testing.md`. Loop: on violations re-write tests with findings prepended. | 1 |
+| 4 | Verify tests | Audit the tests for convention compliance per [testing.md](./testing.md). Loop: on violations re-write tests with findings prepended. | 1 |
 | 5 | Implementation | Write production code that makes the existing tests pass. Constraint: test files are FROZEN — never modify any `_test.go` file. | 0 (retries via stages 6/7) |
 | 6 | Run tests | Shell: `go test ./<affected_packages>/...` from `working_dir`. On failure: diagnose and fix production code (test-freeze constraint verbatim), re-run. | 2 |
 | 7 | Verify logic | Audit that the implementation matches the chunk's intent. On fail: re-run Implementation with findings prepended (test-freeze verbatim), then re-run stages 6 and 7. | 1 |
 | 8 | Format | Shell: `make format` from `working_dir`. On non-zero exit: stop and report. | 0 |
-| 9 | Verify style | Audit the implementation against `style.md` + `service-structure.md`. On violations: apply each fix (no test edits, no scope expansion; run `make format` after fixing), then re-audit. | 1 |
+| 9 | Verify style | Audit the implementation against [style.md](./style.md) + [service-structure.md](./service-structure.md). On violations: apply each fix (no test edits, no scope expansion; run `make format` after fixing), then re-audit. | 1 |
 
 Test-freeze rule (applies to stages 5, 6 retry, 7 retry, 9 fix): never modify any `_test.go` file. If the only correct fix would require changing a test, stop and report.
 

@@ -1,6 +1,6 @@
 # Knowledge Base Structure
 
-This document is the single source of truth for how a personal knowledge base is laid out and how to navigate it. All KB skills (kb-writer, kb-answer) follow these rules.
+This document is the single source of truth for how a personal knowledge base is laid out and how to navigate it. All KB skills (write-kb, answer-kb) follow these rules.
 
 ---
 
@@ -54,7 +54,7 @@ For broad or cross-cutting questions, read overview files from multiple categori
 
 Match whatever conventions already exist in the KB. Before writing anything, observe:
 
-- **Language** — if existing files are in Russian, write in Russian. If English, write in English. Never mix languages within a file.
+- **Language** — Russian is the default for a freshly bootstrapped KB (the `Entrypoint.md` template above seeds Russian headings: `## Категории`, `## Разделы`). For an existing KB in another language, match what is there — if every file is in English, keep writing in English. Never mix languages within a file.
 - **File naming** — use kebab-case slugs (e.g., `gradient-descent.md`, `sql-window-functions.md`).
 - **Heading levels** — match the depth used in existing files (typically `#` for title, `##` for sections).
 - **Section names** — use the same language and style as existing files (e.g., "Связанные темы" or "Related topics").

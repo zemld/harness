@@ -1,5 +1,14 @@
 # Frontend ↔ Backend Integration
 
+## Contents
+- Pipeline overview
+- Step 1 — generate types
+- Step 2 — configured client
+- Step 3 — feature hooks
+- Errors
+- Auth
+- Boundary discipline
+
 Every frontend talks to its Go services through the same three-piece pipeline: `openapi.yaml` from the service is the contract, `openapi-typescript` turns it into TS types, and `openapi-fetch` wraps the typed client. TanStack Query hooks consume that client per feature.
 
 ## Pipeline overview

@@ -1,6 +1,6 @@
 ---
 name: write-implementation
-description: Write production code that makes the existing tests pass. The conventions per stack live in the docs listed by `docs/engineering/<stack>/index.md` Write-implementation section; this skill detects the stack and writes code per those docs. Test files are FROZEN — never modify them. Use after `write-tests` and `verify-tests` have produced compiling tests. Trigger on "implement the code", "fill in the stubs", "write the implementation", "напиши имплементацию", "реализуй", or when `implement-feature` reaches its implementation stage.
+description: Writes production code that makes the existing tests pass. The conventions per stack live in the docs listed by `docs/engineering/<stack>/index.md` Write-implementation section; this skill detects the stack and writes code per those docs. Test files are FROZEN — never modify them. Use after `write-tests` and `verify-tests` have produced compiling tests. Trigger on "implement the code", "fill in the stubs", "write the implementation", "напиши имплементацию", "реализуй", or when `implement-feature` reaches its implementation stage.
 ---
 
 Write production code that satisfies the existing tests. The tests are the contract — read them, understand what they expect, implement to match.

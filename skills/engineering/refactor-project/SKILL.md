@@ -1,6 +1,6 @@
 ---
 name: refactor-project
-description: Audit a project against the conventions documented in `docs/engineering/<stack>/` and fix every violation — restructures files, corrects imports, applies style fixes, and delegates complex behavioral changes to feature-workflow. Works for any stack the harness has docs for (Go service, frontend project, etc.). Use proactively when the user says "refactor the service", "refactor the frontend", "приведи сервис к стандартам", "приведи фронт к стандартам", "audit the project", "проверь проект по конвенциям", "сервис не соответствует конвенциям", "check the project against conventions", or asks whether a project matches the harness conventions.
+description: Audits a project against the conventions documented in `docs/engineering/<stack>/` and fixes every violation — restructures files, corrects imports, applies style fixes, and delegates complex behavioral changes to feature-workflow. Works for any stack the harness has docs for (Go service, frontend project, etc.). Use proactively when the user says "refactor the service", "refactor the frontend", "приведи сервис к стандартам", "приведи фронт к стандартам", "audit the project", "проверь проект по конвенциям", "сервис не соответствует конвенциям", "check the project against conventions", or asks whether a project matches the harness conventions.
 ---
 
 Audit a project end-to-end against the conventions for its stack and fix every violation. The category list and procedure are stack-specific and documented in each stack's index; this skill is a generic runner.
