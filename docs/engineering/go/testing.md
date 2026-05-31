@@ -18,20 +18,22 @@ Use [testify](https://github.com/stretchr/testify): `require` for assertions tha
 
 **One behavior per test function.** Each `TestXxx` covers exactly one public method or function. If two methods need testing, write two `TestXxx` functions.
 
+**Co-located, same package.** `_test.go` files live next to the file they test — no separate `test/` directory. Use the same package name (e.g. `package creation`), not the `_test` suffix variant.
+
 **Parallel by default.** Call `t.Parallel()` at the top of the test function and at the top of each `t.Run` subtest unless the test explicitly requires serial execution.
 
 ## Mocks
 
 **mockery v3.** All mocks are generated with mockery v3. Never write mocks by hand. Configuration lives in `.mockery.yml` at the service root.
 
-**Mock location.** The `mocks/` subdirectory lives next to the **implementation** being mocked — not next to the interface definition and not next to the test file. Interfaces may live in `ports/` (for clients and repositories) or `domain/` (for services); the mock always follows the implementation, not the interface.
+**Mock location.** The `mocks/` subdirectory lives next to the **implementation** being mocked — not next to the interface definition and not next to the test file. Interfaces may live in `ports/` (for clients and repositories) or `domain/` (for services); the mock always follows the implementation, not the interface. For repositories and clients, where the implementation lives in its own subdirectory (e.g. `adapters/postgres/`), `mocks/` is a sibling of that directory — not a subpackage inside it (e.g. `adapters/mocks/`, not `adapters/postgres/mocks/`).
 
 **Regeneration.** After adding or changing any interface, run `mockery` from the service root before writing tests. Never edit files inside `mocks/` by hand — they are fully regenerated on each run.
 
 ## Example
 
 ```go
-package creation_test
+package creation
 
 import (
     "context"

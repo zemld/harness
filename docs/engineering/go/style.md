@@ -12,7 +12,7 @@ These rules are stricter or more specific than Uber's guide and take precedence 
 
 **Function body.** Target under 30 lines of logic. Longer is a smell — defend it or split.
 
-**Parameters.** Maximum 3. `context.Context` does not count. Group related inputs into a struct when the limit is exceeded.
+**Parameters.** Maximum 3. `context.Context` does not count. Group related inputs into a struct when the limit is exceeded. **Exception — constructors:** `NewXxx` functions may have as many parameters as they have dependencies; each dependency gets its own parameter.
 
 **Return values.** Maximum 2 total; `error` counts as one. Return a struct instead of a tuple when you need more.
 
