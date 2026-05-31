@@ -17,6 +17,7 @@ cp -r "$SCRIPT_DIR/docs/." "$TARGET/docs/"
 echo "Copying skills..."
 for domain_dir in "$SCRIPT_DIR/skills"/*/; do
     [ -d "$domain_dir" ] || continue
+    [[ "$(basename "$domain_dir")" == "deprecated" ]] && continue
     for skill_dir in "$domain_dir"*/; do
         [ -d "$skill_dir" ] || continue
         skill_name="$(basename "$skill_dir")"
