@@ -45,20 +45,20 @@ The runner that produces this layout — exact pnpm commands, file contents, etc
 Read:
 - [project-structure.md](./project-structure.md) — file placement, no barrels outside feature index, no `src/utils/`, `src/api/generated.ts` is codegen, tests co-located.
 - [style.md](./style.md) — TS strict, function components only, no `React.FC`, no implicit `any`.
-- Plus the doc that matches the chunk's artifact:
-  - [state.md](./state.md) — chunk introduces client state.
-  - [forms.md](./forms.md) — chunk introduces a form.
-  - [api-integration.md](./api-integration.md) — chunk consumes the backend API.
-  - [routing.md](./routing.md) — chunk adds or changes a route.
+- Plus the doc that matches the PRD's artifact:
+  - [state.md](./state.md) — PRD introduces client state.
+  - [forms.md](./forms.md) — PRD introduces a form.
+  - [api-integration.md](./api-integration.md) — PRD consumes the backend API.
+  - [routing.md](./routing.md) — PRD adds or changes a route.
 
-Bottom-up order (skip layers not in the chunk's `files`):
+Bottom-up order (skip layers not touched by the PRD):
 
 1. **Zod schemas + inferred types** (`src/features/<feature>/schemas.ts`) — schemas validate AND drive TS types (`z.infer<typeof X>`); single source of truth.
 2. **API hooks** (`src/features/<feature>/api.ts`) — TanStack Query (`useQuery`, `useMutation`); call `apiClient` from `src/api/client.ts`; types from `src/api/generated.ts`; consistent query keys.
 3. **Feature components** (`src/features/<feature>/components/`) — function components only; props inline or via local `type Props`; forms via RHF + `zodResolver`; Tailwind + shadcn primitives.
 4. **Pages** (`src/pages/<route>/`) — `page.tsx` assembles components from `features/` and `components/`; ~80 lines max; loader in `loader.ts` if needed.
 5. **Shared UI** (`src/components/`) — only when a second consumer demands it; do not pre-promote.
-6. **App / routes / providers** (`src/app/`) — touch only when the chunk explicitly adds a new route or provider.
+6. **App / routes / providers** (`src/app/`) — touch only when the PRD explicitly adds a new route or provider.
 
 Build check: `pnpm tsc --noEmit` from `working_dir`. Do not run the test suite — that's the orchestrator's job.
 
@@ -118,7 +118,7 @@ After all direct fixes: `pnpm biome check --write . && pnpm tsc --noEmit`.
 
 ## Implementation pipeline
 
-Runs a chunk through 8 stages in order. Stage 0 is conditional; each remaining stage is either an engineering action (described below) or a shell command run from `working_dir`.
+Runs a PRD through 9 stages in order (Stage 0 is conditional, making it up to 10 rows in the report). Each stage is either an engineering action (described below) or a shell command run from `working_dir`.
 
 Pipeline-level constants:
 - Test command: `pnpm vitest run --reporter=verbose`
@@ -130,17 +130,16 @@ Stages:
 
 | # | Name | Action | Retry cap |
 |---|---|---|---|
-| 0 | OpenAPI regen | Shell: OpenAPI regen command. Run only when the chunk depends on a chunk whose `files` include `api/openapi.yaml`. | 0 (precondition — on failure stop) |
-| 1 | Tests | Write tests for the production code. Constraint: production files do not exist yet — tests must compile against the types/exports the spec promises; runtime failure is expected at this stage. | 0 |
-| 2 | Verify tests | Audit the tests for convention compliance per [testing.md](./testing.md). Loop: on violations re-write tests with findings prepended. | 1 |
-| 3 | Implementation | Write production code that makes the existing tests pass. Constraint: test files are FROZEN — never modify any `*.test.ts(x)` or `*.spec.ts(x)` file. | 0 (retries via stages 4/5) |
-| 4 | Run tests + type-check | Shell: test command followed by type-check command. On failure: diagnose and fix production code (test-freeze constraint verbatim), re-run both. | 2 |
-| 5 | Verify logic | Audit that the implementation matches the chunk's intent. On fail: re-run Implementation with findings prepended (test-freeze verbatim), re-run stages 4 and 5. | 1 |
-| 6 | Format | Shell: format command. On non-zero exit (Biome could not auto-fix all issues): stop and report. | 0 |
-| 7 | Verify style | Audit the implementation against [style.md](./style.md) + [project-structure.md](./project-structure.md). On violations: apply each fix (no test edits, no scope expansion; run the format command after fixing), then re-audit. | 1 |
+| 0 | OpenAPI regen | Shell: OpenAPI regen command. Run only when the PRD touches the upstream OpenAPI. | 0 (precondition — on failure stop) |
+| 1 | Analyze cases | Enumerate the full set of test cases the PRD must cover — happy path, edges, errors, corners — as a table keyed by input conditions and expected behavior. Output is consumed by the Tests stage. | 0 |
+| 2 | Tests | Write tests for the production code, driven by the cases table from stage 1. Constraint: production files do not exist yet — tests must compile against the types/exports the spec promises; runtime failure is expected at this stage. | 0 |
+| 3 | Verify tests | Audit the tests for convention compliance per [testing.md](./testing.md). Loop: on violations re-write tests with findings prepended. | 1 |
+| 4 | Implementation | Write production code that makes the existing tests pass. Constraint: test files are FROZEN — never modify any `*.test.ts(x)` or `*.spec.ts(x)` file. | 0 (retries via stages 5/6) |
+| 5 | Run tests + type-check | Shell: test command followed by type-check command. On failure: diagnose and fix production code (test-freeze constraint verbatim), re-run both. | 2 |
+| 6 | Verify logic | Audit that the implementation matches the PRD's intent. On fail: re-run Implementation with findings prepended (test-freeze verbatim), re-run stages 5 and 6. | 1 |
+| 7 | Format | Shell: format command. On non-zero exit (Biome could not auto-fix all issues): stop and report. | 0 |
+| 8 | Verify style | Audit the implementation against [style.md](./style.md) + [project-structure.md](./project-structure.md). On violations: apply each fix (no test edits, no scope expansion; run the format command after fixing), then re-audit. | 1 |
 
-Test-freeze rule (applies to stages 3, 4 retry, 5 retry, 7 fix): never modify any `*.test.ts(x)` or `*.spec.ts(x)` file. If the only correct fix would require changing a test, stop and report.
+Test-freeze rule (applies to stages 4, 5 retry, 6 retry, 8 fix): never modify any `*.test.ts(x)` or `*.spec.ts(x)` file. If the only correct fix would require changing a test, stop and report.
 
-Scope rule (all stages): only files listed in the chunk's `files` may be touched. If a stage needs a file outside that list, that is a spec gap — escalate.
-
-Final report shape (pipeline label `Frontend`): 8-row table with Stage / Status / Notes, plus the list of files created/modified and any blocking issues. Stage 0 row shows status `skipped` when the precondition does not hold.
+Final report shape (pipeline label `Frontend`): up to 9-row table with Stage / Status / Notes, plus the list of files created/modified and any blocking issues. Stage 0 row shows status `skipped` when the precondition does not hold.

@@ -37,7 +37,7 @@ Read:
 - [style.md](./style.md) — function size, nesting, parameter count, no flag args.
 - [dependencies.md](./dependencies.md) — allowed libraries per concern; do not introduce a substitute without updating this doc first.
 
-Layered walk (deepest first, skip layers not in the chunk's `files`):
+Layered walk (deepest first, skip layers not touched by the PRD):
 
 1. **Domain** (`internal/domain/`) — pure types, no I/O, no imports from `internal/`.
 2. **Service** (`internal/services/<context>/<name>/`) — one operation per file; `service.go` holds only struct + constructor; imports only `domain/` and `ports/`.
@@ -106,7 +106,7 @@ After all direct fixes: `make format` from the service root.
 
 ## Implementation pipeline
 
-Runs a chunk through 9 stages in order. Each stage is either an engineering action (described below) or a shell command run from `working_dir`.
+Runs a PRD through 10 stages in order. Each stage is either an engineering action (described below) or a shell command run from `working_dir`.
 
 Pipeline-level constants:
 - Test command: `go test ./<affected_packages>/...`
@@ -117,18 +117,17 @@ Stages:
 
 | # | Name | Action | Retry cap |
 |---|---|---|---|
-| 1 | Contracts | Define every interface and domain type the chunk introduces or consumes — package paths, method signatures, entity fields. | 0 |
+| 1 | Contracts | Define every interface and domain type the PRD introduces or consumes — package paths, method signatures, entity fields. | 0 |
 | 2 | Stubs | Scaffold the implementing structs for each interface in their target package, with constructor and one `panic("not implemented")` method per interface method. | 0 |
-| 3 | Tests | Write tests for the production code. Constraint: stubs panic — tests must compile, runtime failure is expected at this stage. | 0 |
-| 4 | Verify tests | Audit the tests for convention compliance per [testing.md](./testing.md). Loop: on violations re-write tests with findings prepended. | 1 |
-| 5 | Implementation | Write production code that makes the existing tests pass. Constraint: test files are FROZEN — never modify any `_test.go` file. | 0 (retries via stages 6/7) |
-| 6 | Run tests | Shell: `go test ./<affected_packages>/...` from `working_dir`. On failure: diagnose and fix production code (test-freeze constraint verbatim), re-run. | 2 |
-| 7 | Verify logic | Audit that the implementation matches the chunk's intent. On fail: re-run Implementation with findings prepended (test-freeze verbatim), then re-run stages 6 and 7. | 1 |
-| 8 | Format | Shell: `make format` from `working_dir`. On non-zero exit: stop and report. | 0 |
-| 9 | Verify style | Audit the implementation against [style.md](./style.md) + [service-structure.md](./service-structure.md). On violations: apply each fix (no test edits, no scope expansion; run `make format` after fixing), then re-audit. | 1 |
+| 3 | Analyze cases | Enumerate the full set of test cases the PRD must cover — happy path, edges, errors, corners — as a table keyed by input conditions and expected behavior. Output is consumed by the Tests stage. | 0 |
+| 4 | Tests | Write tests for the production code, driven by the cases table from stage 3. Constraint: stubs panic — tests must compile, runtime failure is expected at this stage. | 0 |
+| 5 | Verify tests | Audit the tests for convention compliance per [testing.md](./testing.md). Loop: on violations re-write tests with findings prepended. | 1 |
+| 6 | Implementation | Write production code that makes the existing tests pass. Constraint: test files are FROZEN — never modify any `_test.go` file. | 0 (retries via stages 7/8) |
+| 7 | Run tests | Shell: `go test ./<affected_packages>/...` from `working_dir`. On failure: diagnose and fix production code (test-freeze constraint verbatim), re-run. | 2 |
+| 8 | Verify logic | Audit that the implementation matches the PRD's intent. On fail: re-run Implementation with findings prepended (test-freeze verbatim), then re-run stages 7 and 8. | 1 |
+| 9 | Format | Shell: `make format` from `working_dir`. On non-zero exit: stop and report. | 0 |
+| 10 | Verify style | Audit the implementation against [style.md](./style.md) + [service-structure.md](./service-structure.md). On violations: apply each fix (no test edits, no scope expansion; run `make format` after fixing), then re-audit. | 1 |
 
-Test-freeze rule (applies to stages 5, 6 retry, 7 retry, 9 fix): never modify any `_test.go` file. If the only correct fix would require changing a test, stop and report.
+Test-freeze rule (applies to stages 6, 7 retry, 8 retry, 10 fix): never modify any `_test.go` file. If the only correct fix would require changing a test, stop and report.
 
-Scope rule (all stages): only files listed in the chunk's `files` may be touched. If a stage needs a file outside that list, that is a spec gap — escalate.
-
-Final report shape (pipeline label `Go`): 9-row table with Stage / Status / Notes, plus the list of files created/modified and any blocking issues.
+Final report shape (pipeline label `Go`): 10-row table with Stage / Status / Notes, plus the list of files created/modified and any blocking issues.
