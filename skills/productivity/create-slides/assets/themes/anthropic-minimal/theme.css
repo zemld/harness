@@ -1,0 +1,249 @@
+/* @theme anthropic-minimal */
+
+@import 'default';
+
+:root {
+  --bg: #F5F0E8;
+  --bg-soft: #EAE3D6;
+  --ink: #1A1A1A;
+  --ink-soft: #4A4A4A;
+  --ink-muted: #8A8A8A;
+  --accent: #D97757;
+  --rule: #D8D0C0;
+}
+
+section {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Söhne", "Inter", -apple-system, "Helvetica Neue", system-ui, sans-serif;
+  font-size: 28px;
+  line-height: 1.5;
+  padding: 80px 96px;
+  letter-spacing: -0.005em;
+}
+
+h1, h2, h3 {
+  font-family: "Tiempos Headline", "Charter", Georgia, "Times New Roman", serif;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  margin: 0 0 0.4em 0;
+}
+
+h1 {
+  font-size: 88px;
+  line-height: 1.05;
+}
+
+h2 {
+  font-size: 60px;
+  line-height: 1.1;
+  margin-bottom: 0.6em;
+}
+
+h3 {
+  font-size: 36px;
+  line-height: 1.2;
+  color: var(--ink-soft);
+}
+
+p, li {
+  font-weight: 400;
+  color: var(--ink);
+}
+
+strong {
+  font-weight: 600;
+}
+
+em {
+  font-style: italic;
+  color: var(--ink-soft);
+}
+
+ul, ol {
+  padding-left: 1.2em;
+}
+
+li {
+  margin: 0.35em 0;
+}
+
+li::marker {
+  color: var(--accent);
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px solid var(--accent);
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--rule);
+  margin: 1em 0;
+}
+
+code {
+  font-family: "JetBrains Mono", "SF Mono", "Menlo", monospace;
+  font-size: 0.85em;
+  background: var(--bg-soft);
+  color: var(--ink);
+  padding: 0.1em 0.35em;
+  border-radius: 3px;
+}
+
+pre {
+  background: var(--bg-soft);
+  border-left: 3px solid var(--accent);
+  padding: 1em 1.4em;
+  border-radius: 4px;
+  font-size: 22px;
+  line-height: 1.45;
+  overflow: visible;
+}
+
+pre code {
+  background: transparent;
+  padding: 0;
+  font-size: inherit;
+}
+
+blockquote {
+  border-left: 3px solid var(--accent);
+  margin: 0.8em 0;
+  padding: 0.2em 0 0.2em 1.2em;
+  color: var(--ink-soft);
+  font-style: italic;
+  font-family: "Tiempos Text", "Charter", Georgia, serif;
+}
+
+/* Screenshot placeholder block — visually distinct dashed frame */
+section .screenshot-placeholder,
+section blockquote.screenshot {
+  border: 2px dashed var(--ink-muted);
+  background: transparent;
+  color: var(--ink-muted);
+  font-style: normal;
+  font-family: "JetBrains Mono", "SF Mono", monospace;
+  font-size: 22px;
+  text-align: center;
+  padding: 2.4em 1em;
+  margin: 1.2em 0;
+  border-radius: 4px;
+}
+
+table {
+  border-collapse: collapse;
+  margin: 0.6em 0;
+  font-size: 24px;
+}
+
+th, td {
+  border-bottom: 1px solid var(--rule);
+  padding: 0.55em 0.9em;
+  text-align: left;
+}
+
+th {
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+/* Title slide — centered, oversized */
+section.title {
+  justify-content: center;
+  text-align: left;
+}
+
+section.title h1 {
+  font-size: 120px;
+  letter-spacing: -0.03em;
+  margin-bottom: 0.1em;
+}
+
+section.title h3 {
+  font-size: 32px;
+  color: var(--ink-soft);
+  font-style: italic;
+  font-weight: 400;
+}
+
+section.title .date {
+  position: absolute;
+  bottom: 80px;
+  left: 96px;
+  font-size: 22px;
+  color: var(--ink-muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-family: "JetBrains Mono", monospace;
+}
+
+/* Section divider slides — single huge centered word */
+section.divider {
+  justify-content: center;
+  text-align: center;
+}
+
+section.divider h1 {
+  font-size: 110px;
+  color: var(--ink);
+}
+
+section.divider p {
+  color: var(--ink-soft);
+  font-size: 28px;
+}
+
+/* Footer / page number */
+section::after {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 16px;
+  color: var(--ink-muted);
+  letter-spacing: 0.1em;
+}
+
+/* Lead paragraph — used right after h1/h2 for the slide thesis */
+section .lead,
+section h2 + p {
+  font-size: 32px;
+  line-height: 1.4;
+  color: var(--ink-soft);
+  max-width: 22em;
+}
+
+/* Quiet text variant */
+.muted {
+  color: var(--ink-muted);
+}
+
+/* Accent text */
+.accent {
+  color: var(--accent);
+}
+
+/* Flow diagram — horizontal chain of steps with arrows */
+.flow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.6em;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 24px;
+  margin: 1.4em 0;
+}
+
+.flow .step {
+  background: var(--bg-soft);
+  padding: 0.5em 0.9em;
+  border-radius: 4px;
+  color: var(--ink);
+}
+
+.flow .arrow {
+  color: var(--accent);
+  font-weight: 600;
+}
