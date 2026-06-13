@@ -1,6 +1,6 @@
 ---
 name: implement-prd
-description: Drives a feature from a PRD-style markdown document to finished code by running an autonomous write→review loop — a writer subagent produces the whole change following the project's engineering docs, an independent reviewer subagent checks it, and the writer fixes any findings, repeating until the review passes. Use when the user hands over a markdown design doc (top-level or nested PRD) or freeform requirements and asks for code. Trigger on "implement this PRD", "implement the PRD at <path>", "implement feature from doc", "реализуй PRD", "реализуй фичу по PRD", "запусти имплементацию", "имплементируй фичу", "имплементируй по PRD", or any phrasing where the user hands over a markdown design doc and asks for code. Be eager to trigger — better to fire than to miss. Do NOT use for design or decomposition (those are `write-prd`) and do NOT use for standalone post-implementation review (that is `review-changes`).
+description: Drives a PRD-style or freeform requirements doc through to finished, reviewed, formatted code.
 ---
 
 Take one markdown document and drive it to finished code: enumerate the test cases once, then run an autonomous loop where a **writer** produces the whole change, an independent **reviewer** checks it, and the writer fixes what the review finds — repeating until the review passes or a retry cap is hit. The orchestrator never edits files itself — not production code, not the PRD; it dispatches the roles, carries context between them, and reports.
@@ -21,9 +21,11 @@ Before the loop, spawn one `Agent` subagent that invokes `analyze-cases` on the 
 
 ## Step 2 — Write → review loop
 
-Each step below spawns one `Agent` subagent whose prompt just invokes the named skill with the inputs described — the skill itself carries the procedure, so no elaborate prompt construction is needed. Run the loop with a cap of **2 fix iterations** (so at most 3 reviews total). It runs autonomously — do not pause for the user between iterations.
+Each step below spawns one `Agent` subagent whose prompt just invokes the named skill with the inputs described — the skill itself carries the procedure, so no elaborate prompt construction is needed. This orchestrator is the only thing that spawns subagents: the leaf skills it dispatches (`analyze-cases`, `write-code`, `review-changes`) each run inline in their own subagent and never spawn a further one, so there is exactly one level of spawning and no nesting. Run the loop with a cap of **2 fix iterations** (so at most 3 reviews total). It runs autonomously — do not pause for the user between iterations.
 
 1. **Write.** Spawn an `Agent` subagent that invokes `write-code` with `intent` = the PRD body **plus `<cases_table>` under a `## Cases` heading**, and the resolved `working_dir`. It returns the list of files it created/modified and confirms the change builds, its tests pass, and it is formatted.
+
+   If the writer instead reports it **could not reach green for a non-test-freeze reason** (build fails, tests cannot be made to pass without a spec change, etc.), do not proceed to review or loop — stop and emit the final report with the `BLOCKED` verdict, relaying the writer's State/Deviations verbatim. (A test-freeze stop is the separate Escalation below.)
 
 2. **Review.** Spawn an `Agent` subagent that invokes `review-changes` with `intent` = the PRD body (**not** the cases table) and `scope` = the files the writer just reported; tell it to return only the verdict and `file:line` findings, not to ask what to fix. Consume its result as **data**. Do not surface its "tell me what to fix" tail to the user; that decision is the loop's, not the user's.
 
@@ -43,7 +45,7 @@ Emit one report when the loop ends:
 ```
 ## implement-prd: <first line of the PRD's intent>
 
-Verdict: PASS | FAIL (findings remain) | ESCALATED (test-freeze) | NOT STARTED — <reason>
+Verdict: PASS | FAIL (findings remain) | ESCALATED (test-freeze) | BLOCKED (writer could not reach green) | NOT STARTED — <reason>
 Iterations: <N writes, M reviews>
 
 Files created / modified:
@@ -54,6 +56,9 @@ Outstanding findings (FAIL only):
 
 Escalation (ESCALATED only):
 - <which frozen test would have to change, and why, verbatim>
+
+Blocker (BLOCKED only):
+- <the writer's State/Deviations explaining why the change could not reach green, verbatim>
 ```
 
 Relay the subagents' words verbatim; do not re-judge them. The orchestrator tracks no frozen scope — it just collects the paths the writer reported as touched.

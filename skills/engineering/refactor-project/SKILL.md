@@ -1,6 +1,6 @@
 ---
 name: refactor-project
-description: Audits a project against the conventions documented in `docs/engineering/<stack>/` and fixes every violation — restructures files, corrects imports, applies style fixes, and surfaces complex behavioral changes as scoped follow-up features for the user to implement separately. Works for any stack the harness has docs for (Go service, frontend project, etc.). Use proactively when the user says "refactor the service", "refactor the frontend", "приведи сервис к стандартам", "приведи фронт к стандартам", "audit the project", "проверь проект по конвенциям", "сервис не соответствует конвенциям", "check the project against conventions", or asks whether a project matches the harness conventions.
+description: Audits a project against the harness conventions for its stack and fixes every violation — restructures files, fixes imports, applies style fixes — surfacing complex behavioral changes as scoped follow-up features.
 ---
 
 Audit a project end-to-end against the conventions for its stack and fix every violation. The category list and procedure are stack-specific and documented in each stack's index; this skill is a generic runner.
@@ -18,27 +18,18 @@ Ask for any missing input:
 3. Read `docs/engineering/<stack>/index.md` in full. Locate the `## Refactor project` section.
 4. Read every doc listed there. These docs are the source of truth for the rules being audited.
 
-## Step 2 — Spawn the audit subagent
+## Step 2 — Audit the project (inline)
 
-Spawn an **Explore** subagent. Substitute `<project_path>` and `<harness_root>` (the repo containing `docs/engineering/`):
+Run the audit yourself, in this context — do not spawn a subagent. (If a caller wants this audit isolated, that caller spawns this skill; the skill never spawns its own subagent.) Throughout Step 2 you are **read-only** — do not modify any project file while auditing; fixes happen later, in Steps 4–5.
 
----
-You are a project conventions auditor. Read-only — never modify any file.
-
-**Project to audit:** `<project_path>`
-**Stack:** `<stack>`
-**Index:** `<harness_root>/docs/engineering/<stack>/index.md`
-
-**Instructions:**
-
-1. Read the index's `## Refactor project` section in full.
+1. Read the index's `## Refactor project` section in full (already located in Step 1).
 2. Read every doc the section lists.
-3. Read the full contents of `<project_path>` — every source file plus the manifest and config files the index's category list mentions.
-4. For each violation, record one row per category table below. Use the category list defined in the index's Refactor section (e.g. Structure, Style, Testing, Dependency, Transaction, Tooling for Go; Structure, State, Forms, API, Routing, Testing, Style, Tooling for frontend).
+3. Read the full contents of the project — every source file plus the manifest and config files the index's category list mentions.
+4. For each violation, record one row in the relevant category table below. Use the category list defined in the index's Refactor section (e.g. Structure, Style, Testing, Dependency, Transaction, Tooling for Go; Structure, State, Forms, API, Routing, Testing, Style, Tooling for frontend).
 
-**Output format:**
+**Report format:**
 
-Write a Markdown report to `<project_path>/audit-report.md` using this exact structure:
+Build the audit report in this exact structure (you write it to disk in Step 3):
 
 ```
 # Audit Report: <project name>
@@ -79,11 +70,10 @@ Write a Markdown report to `<project_path>/audit-report.md` using this exact str
 - **Complexity** — `direct` (rename, move, fix import, add missing config file, swap library) or `behavioral` (logic rewrite, state model change, API contract migration, test rewrite). The index's Refactor section names the typical examples per stack.
 
 If all categories are clean, replace the tables with `All rules satisfied — no violations found.`
----
 
-## Step 3 — Present audit and confirm
+## Step 3 — Persist, present, and confirm
 
-Tell the user the full report is at `<project_path>/audit-report.md`. Render the Summary table and all violation tables inline in chat.
+Write the report you built to `<project_path>/audit-report.md`. Tell the user the full report is at that path, and render the Summary table and all violation tables inline in chat.
 
 If zero violations → report success and stop.
 

@@ -1,6 +1,6 @@
 ---
 name: write-code
-description: Writes the production code and tests for a stated intent, following the project's own engineering docs, and returns only once the build/type-check passes, the affected tests pass, and the code is formatted. The intent is any natural-language description of the desired code — a PRD body, a freeform feature request, or a list of issues to fix in code that already exists. Use whenever the user wants code written or changed to match a description: "write the code for this", "implement this", "make these fixes", "напиши код по этому", "реализуй это", "внеси эти правки". Stack-agnostic — it detects the stack and reads that stack's write conventions itself. Do NOT use for read-only review (that reports, it does not write) or for project-wide refactors against conventions.
+description: Writes production code and tests for a stated intent following the project's engineering docs, returning only once the build, the affected tests, and formatting all pass.
 ---
 
 Write the code that satisfies an intent, end to end, in this one context, and do not return until it builds, the affected tests pass, and it is formatted.

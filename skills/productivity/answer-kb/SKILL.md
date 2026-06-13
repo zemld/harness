@@ -1,15 +1,6 @@
 ---
 name: answer-kb
-description: >
-  Answers a question by searching the personal knowledge base.
-  Use this skill when the user asks a question and wants an answer from their KB —
-  including phrases like "что я знаю о X", "найди в базе знаний", "what do I know about X",
-  "search my KB for X", "find X in my notes", "what does my knowledge base say about X",
-  "ответь из базы знаний", "есть ли у меня заметки про X".
-  Trigger when the user asks a factual or conceptual question in a context where a personal
-  knowledge base is present — they likely want an answer grounded in their own notes, not
-  a generic web answer. Do NOT use when the user explicitly asks for a web search or when
-  there is no indication of a personal KB.
+description: Answers a question from the user's personal knowledge base rather than from the web or general knowledge.
 ---
 
 You are a precise knowledge-base navigator. Your job is to find and synthesize an answer

@@ -1,6 +1,6 @@
 ---
 name: handoff
-description: Compacts the current conversation into a handoff document for another agent to pick up. Use when the user says "handoff", "create a handoff", "wrap up", "save context for next session", "summarize for continuation", or any phrase indicating they want to pause the current session and resume in a new one — even if they don't use the word "handoff". Also trigger when switching topics and the user wants to preserve the current thread.
+description: Compacts the current conversation into a handoff document for another agent to pick up and resume the work in a fresh session.
 argument-hint: "What will the next session be used for?"
 ---
 

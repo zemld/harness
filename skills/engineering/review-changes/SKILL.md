@@ -1,6 +1,6 @@
 ---
 name: review-changes
-description: Reviews a described code change against its intent and the project's own documented engineering standards — checking logic-vs-intent, structure/style, and test quality plus coverage — over the scope you hand it, not a whole-repo sweep. Use when the user asks to review changes, check work before commit, mentions "review" / "ревью" / "проверь изменения" / "посмотри что я сделал" / "check my changes", or describes what they built and asks whether it is done right. Wants a one-line intent and a set of files/area to review; if either is missing, it asks rather than guessing.
+description: Reviews a code change against its stated intent and the project's documented standards — logic, structure/style, and test quality — over the scope you give it rather than the whole repo. Needs a one-line intent and the set of files/area to review.
 ---
 
 Review one code change end-to-end against two things: the **intent** it was supposed to satisfy, and the **engineering conventions this project documents for itself**. Produce a single report covering logic, structure/style, and tests. This skill is self-contained and read-only — it never modifies a file and never delegates to another skill.
@@ -14,20 +14,11 @@ Two inputs drive the review. If the user's message already supplies one, use it;
 - **Intent** — what the change was supposed to accomplish, in a sentence or two (the goal, not the implementation). If absent, ask: *"What was this change supposed to do? One or two sentences — the goal, not the implementation."*
 - **Scope** — the specific files (or a clearly locatable area) to review. Review only this. Do **not** run `git diff`/`git status` to discover files, and do not pull in changes outside the stated scope. If no files or locatable area are given, ask which files or area to review.
 
-Wait until both are settled before launching the analysis.
+Wait until both are settled before running the analysis.
 
-## Step 1 — Launch the analysis subagent
+## Step 1 — Run the analysis (inline)
 
-Spawn one read-only **Explore** subagent. Substitute `<intent>` and `<scope files>` (one path per line). Hand it this prompt verbatim:
-
----
-You are a code-change reviewer. You are strictly read-only: never modify, create, or suggest editing any file. Your output is a verdict, not a change.
-
-**Intent** (what the change was supposed to accomplish):
-<intent>
-
-**Scope** (the only files you may review — do not pull in anything outside this list):
-<scope files>
+Do this review yourself, in this context — do not spawn a subagent. (If a caller wants this review to run with fresh eyes in an isolated context, that caller spawns this skill; the skill never spawns its own subagent.) You are strictly **read-only** throughout Step 1: never modify, create, or suggest editing any file — your output is a verdict, not a change.
 
 Carry no built-in assumptions about programming language, framework, or project layout, and do not assume where the project keeps its standards. Discover everything from the repository.
 
@@ -51,7 +42,7 @@ Carry no built-in assumptions about programming language, framework, or project 
        - *Conventions* — check the test files against the project's documented test conventions (naming, shape, assertion style, placement — whatever the docs require).
        - *Completeness* — derive from the intent the full set of scenarios the change should cover (happy path, edges, error/failure paths, boundary/corner cases) and check each against the tests actually present. Flag every scenario from the intent that has no corresponding test. If there are no test files in scope at all, state that plainly and list the scenarios that therefore go untested.
 
-**Output** — return exactly this structure:
+**Findings format** — assemble your findings into exactly this structure to carry into Step 2:
 
 ```
 Conventions consulted: <where you found them + which stack's rules applied, or "none found — reviewed against intent only">
@@ -80,16 +71,15 @@ Completeness:
 ```
 
 Be precise and cite `file:line` for every code-side finding. Do not suggest fixes — only report.
----
 
 ## Step 2 — Present the unified report
 
-Relay the subagent's findings under one report. Add the verdict and next actions yourself.
+Assemble the findings from Step 1 into one report. Add the verdict and next actions yourself.
 
 ```
 ## Review: <one-line intent recap>
 
-<subagent output: Conventions consulted / Docs read / Logic / Style / Tests sections, verbatim>
+<the Step 1 findings: Conventions consulted / Docs read / Logic / Style / Tests sections>
 
 ### Overall verdict
 PASS — ready to commit.

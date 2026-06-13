@@ -1,6 +1,6 @@
 ---
 name: scaffold-project
-description: Scaffolds a new project for any stack the harness has docs for (Go service, frontend project, etc.). The skill body is a generic runner; the conventions a fresh project must satisfy live in `docs/engineering/<stack>/index.md` under the Scaffold section, and the implementation that produces those conventions ships as `scripts/<stack>/scaffold.py` next to this skill. Use this skill whenever the user wants to start a new project from scratch — Go service, backend microservice, frontend SPA, React project, web app, or any other supported stack. Trigger on phrases like "new Go service", "scaffold a service", "new frontend project", "scaffold a frontend", "create a microservice", "bootstrap a React project", "start a new web app", or any concrete description of starting a project that needs a skeleton, even if the word "scaffold" isn't used.
+description: Scaffolds a new project from scratch for any stack the harness has docs for (Go service, frontend, etc.).
 ---
 
 Scaffold a new project. Conventions per stack live in `docs/engineering/<stack>/index.md`; the runner that materializes them ships bundled with this skill.
@@ -26,7 +26,7 @@ The runner for stack `<stack>` is `skills/engineering/scaffold-project/scripts/<
 
 If no runner exists for the requested stack, stop and report the gap — the stack has conventions documented but no implementation to materialize them yet.
 
-Invoke the runner with the inputs gathered in step 0 plus any stack-specific arguments. Example:
+Invoke the runner with the inputs gathered above (see `## Inputs`) plus any stack-specific arguments. Example:
 
 ```bash
 python skills/engineering/scaffold-project/scripts/<stack>/scaffold.py \

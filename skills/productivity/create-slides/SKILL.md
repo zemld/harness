@@ -1,6 +1,6 @@
 ---
 name: create-slides
-description: Builds a slide deck as a Marp markdown file with a CSS theme matched to the user's design brief — any visual style, not a fixed look. Use whenever the user wants a presentation, slide deck, talk, lightning talk, lecture, or "set of slides" on any topic — including "make a presentation", "build slides", "deck about X", "сделай презентацию", "нужны слайды про X", "talk about Y for a meetup", "slides for tomorrow's review", "minimalist slides", "dark tech slides", "academic deck", "deck in the style of Stripe", "презентация в тёмной теме", "презентация в стиле Anthropic / Notion / Linear", "playful slides with pastel colors". Be eager to trigger — better to fire than to miss. The skill argument carries both the topic and (optionally) the design brief; treat it as the brief, do not re-ask "what is it about". The default output format is Marp + a synthesized or preset CSS theme — switch to Slidev / Reveal.js / Keynote outline / PowerPoint only when the user explicitly asks. Do NOT use for reviewing an existing deck, editing a single existing slide, or designing speaker notes only.
+description: Builds a slide deck as a Marp markdown file with a CSS theme matched to the user's design brief — any visual style, not a fixed look.
 argument-hint: "Topic of the deck plus optional design brief (e.g. 'harness overview, dark tech with neon accent' or 'Q4 roadmap, academic look on white')"
 ---
 
