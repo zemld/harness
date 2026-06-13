@@ -1,8 +1,8 @@
 # Frontend engineering — docs index
 
-This file routes generic skills to the rule-bearing docs that apply for a given engineering task in this stack. Each section lists which docs to read; in some sections (Scaffold, Implementation pipeline) the section body also describes the procedure itself, because that procedure is frontend-specific.
+This file routes generic skills to the rule-bearing docs that apply for a given engineering task in this stack. Each section lists which docs to read; the `Scaffold project` section additionally describes its procedure inline, because that procedure is frontend-specific.
 
-Sibling rule docs in this directory:
+Sibling docs in this directory:
 - [stack.md](./stack.md) — pinned libraries per layer + rationale.
 - [project-structure.md](./project-structure.md) — directory layout and organizational rules.
 - [style.md](./style.md) — TS strict flags, component idioms, naming.
@@ -40,54 +40,6 @@ Conventions a fresh frontend project must satisfy:
 
 The runner that produces this layout — exact pnpm commands, file contents, etc. — is the responsibility of the scaffolding skill; this index does not prescribe its implementation.
 
-## Write implementation
-
-Read:
-- [project-structure.md](./project-structure.md) — file placement, no barrels outside feature index, no `src/utils/`, `src/api/generated.ts` is codegen, tests co-located.
-- [style.md](./style.md) — TS strict, function components only, no `React.FC`, no implicit `any`.
-- Plus the doc that matches the PRD's artifact:
-  - [state.md](./state.md) — PRD introduces client state.
-  - [forms.md](./forms.md) — PRD introduces a form.
-  - [api-integration.md](./api-integration.md) — PRD consumes the backend API.
-  - [routing.md](./routing.md) — PRD adds or changes a route.
-
-Bottom-up order (skip layers not touched by the PRD):
-
-1. **Zod schemas + inferred types** (`src/features/<feature>/schemas.ts`) — schemas validate AND drive TS types (`z.infer<typeof X>`); single source of truth.
-2. **API hooks** (`src/features/<feature>/api.ts`) — TanStack Query (`useQuery`, `useMutation`); call `apiClient` from `src/api/client.ts`; types from `src/api/generated.ts`; consistent query keys.
-3. **Feature components** (`src/features/<feature>/components/`) — function components only; props inline or via local `type Props`; forms via RHF + `zodResolver`; Tailwind + shadcn primitives.
-4. **Pages** (`src/pages/<route>/`) — `page.tsx` assembles components from `features/` and `components/`; ~80 lines max; loader in `loader.ts` if needed.
-5. **Shared UI** (`src/components/`) — only when a second consumer demands it; do not pre-promote.
-6. **App / routes / providers** (`src/app/`) — touch only when the PRD explicitly adds a new route or provider.
-
-Build check: `pnpm tsc --noEmit` from `working_dir`. Do not run the test suite — that's the orchestrator's job.
-
-## Write tests
-
-Read:
-- [testing.md](./testing.md) — Vitest + React Testing Library + MSW; AAA; query by user-perceivable attributes; `userEvent` not `fireEvent`.
-
-For components, use `renderHook` for hooks. For Zod schemas, write pure data tests (parse valid / parse invalid). MSW handlers mock the network — no `fetch` stubs.
-
-File placement: `<Name>.test.ts(x)` next to `<Name>.ts(x)`. E2E specs live under `tests/e2e/` and use Playwright; they are the only exception to co-location.
-
-## Verify style
-
-Read:
-- [style.md](./style.md).
-- [project-structure.md](./project-structure.md).
-
-Categories for the violation table:
-- **Style** — [style.md](./style.md).
-- **Structure** — [project-structure.md](./project-structure.md).
-
-## Verify tests
-
-Read:
-- [testing.md](./testing.md).
-
-For each `describe`/`it`/`test` block in each `*.test.ts(x)` / `*.spec.ts(x)` file, check against every rule in [testing.md](./testing.md).
-
 ## Refactor project
 
 Read every rule doc in this directory: [stack.md](./stack.md), [project-structure.md](./project-structure.md), [style.md](./style.md), [state.md](./state.md), [forms.md](./forms.md), [api-integration.md](./api-integration.md), [routing.md](./routing.md), [testing.md](./testing.md), [dependencies.md](./dependencies.md), [deploy.md](./deploy.md).
@@ -115,31 +67,3 @@ Behavioral fixes (carve out as a scoped follow-up feature and run through the st
 - Feature has no tests.
 
 After all direct fixes: `pnpm biome check --write . && pnpm tsc --noEmit`.
-
-## Implementation pipeline
-
-Runs a PRD through 9 stages in order (Stage 0 is conditional, making it up to 10 rows in the report). Each stage is either an engineering action (described below) or a shell command run from `working_dir`.
-
-Pipeline-level constants:
-- Test command: `pnpm vitest run --reporter=verbose`
-- Type-check command: `pnpm tsc --noEmit`
-- Format command: `pnpm biome check --write .`
-- OpenAPI regen command: `pnpm openapi-typescript <path-to-upstream-api/openapi.yaml> -o src/api/generated.ts`
-
-Stages:
-
-| # | Name | Action | Retry cap |
-|---|---|---|---|
-| 0 | OpenAPI regen | Shell: OpenAPI regen command. Run only when the PRD touches the upstream OpenAPI. | 0 (precondition — on failure stop) |
-| 1 | Analyze cases | Enumerate the full set of test cases the PRD must cover — happy path, edges, errors, corners — as a table keyed by input conditions and expected behavior. Output is consumed by the Tests stage. | 0 |
-| 2 | Tests | Write tests for the production code, driven by the cases table from stage 1. Constraint: production files do not exist yet — tests must compile against the types/exports the spec promises; runtime failure is expected at this stage. | 0 |
-| 3 | Verify tests | Audit the tests for convention compliance per [testing.md](./testing.md). Loop: on violations re-write tests with findings prepended. | 1 |
-| 4 | Implementation | Write production code that makes the existing tests pass. Constraint: test files are FROZEN — never modify any `*.test.ts(x)` or `*.spec.ts(x)` file. | 0 (retries via stages 5/6) |
-| 5 | Run tests + type-check | Shell: test command followed by type-check command. On failure: diagnose and fix production code (test-freeze constraint verbatim), re-run both. | 2 |
-| 6 | Verify logic | Audit that the implementation matches the PRD's intent. On fail: re-run Implementation with findings prepended (test-freeze verbatim), re-run stages 5 and 6. | 1 |
-| 7 | Format | Shell: format command. On non-zero exit (Biome could not auto-fix all issues): stop and report. | 0 |
-| 8 | Verify style | Audit the implementation against [style.md](./style.md) + [project-structure.md](./project-structure.md). On violations: apply each fix (no test edits, no scope expansion; run the format command after fixing), then re-audit. | 1 |
-
-Test-freeze rule (applies to stages 4, 5 retry, 6 retry, 8 fix): never modify any `*.test.ts(x)` or `*.spec.ts(x)` file. If the only correct fix would require changing a test, stop and report.
-
-Final report shape (pipeline label `Frontend`): up to 9-row table with Stage / Status / Notes, plus the list of files created/modified and any blocking issues. Stage 0 row shows status `skipped` when the precondition does not hold.

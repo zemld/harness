@@ -1,5 +1,5 @@
 ---
-name: case-analyzer
+name: analyze-cases
 description: Generates a complete table of test cases (happy path, edge, error, corner) for a function, method, REST/gRPC handler, or repository operation being implemented. Use whenever you need to enumerate all scenarios before writing tests or when asked to analyze cases.
 ---
 

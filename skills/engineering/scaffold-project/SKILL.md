@@ -9,7 +9,7 @@ Scaffold a new project. Conventions per stack live in `docs/engineering/<stack>/
 
 Ask for any missing input:
 
-- **`stack`** — name of the target stack (e.g. `go`, `frontend`). Must match a directory under `docs/engineering/<stack>/` that contains an `index.md`. When invoked from `feature-workflow` via a `bootstrap` entry, this is passed in directly.
+- **`stack`** — name of the target stack (e.g. `go`, `frontend`). Must match a directory under `docs/engineering/<stack>/` that contains an `index.md`.
 - **`name`** — project name in kebab-case.
 - **`path`** — absolute path where the project must live after scaffolding.
 - **Additional stack-specific inputs** — the runner for the stack declares its own CLI arguments. Read `scripts/<stack>/scaffold.py --help` (or the script's docstring) to learn what else to ask.
