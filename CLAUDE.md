@@ -34,12 +34,15 @@ docs/            # Reference documentation
 ---
 name: <kebab-case>
 description: <one sentence — used by Claude to decide when to trigger this skill>
+allowed-tools: <optional — comma-separated tools, optionally path-scoped>
 ---
 
 <prompt body>
 ```
 
 The `description` field is the trigger signal. Make it specific enough that Claude won't fire the skill by accident, but broad enough to catch all intended phrasings.
+
+`allowed-tools` is optional. It pre-authorizes the tools a skill needs so it runs without permission prompts — declared *in the skill*, not in any one agent's settings, so it stays agent-agnostic. Scope each tool to a relative path glob (relative paths keep it location-independent across install locations): e.g. `Read(references/**), Write(features/**)`.
 
 ## Docs
 

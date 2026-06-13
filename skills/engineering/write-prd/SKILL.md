@@ -1,6 +1,7 @@
 ---
 name: write-prd
 description: Designs a feature or subtask by writing a PRD file under `features/<slug>/` — top-level, or nested for one subtask via an optional `<parent-path>#<id>` argument. Synthesizes the file from the conversation and a quick code read; never interviews the user.
+allowed-tools: Read(references/**), Write(features/**)
 ---
 
 Capture the design of a feature into one PRD file. Output is `<working_dir>/features/<feature-slug>/PRD.md`, or `<working_dir>/features/<feature-slug>/subtasks/<id>-<slug>.md` when invoked with a `<parent-path>#<id>` argument. One schema covers both — see `references/prd-schema.md` for file format, layout, ids, and the no-paths rule. Skill instructions are in English; respond in the user's language.
