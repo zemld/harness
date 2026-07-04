@@ -3,83 +3,61 @@ name: review-changes
 description: Reviews a code change against its stated intent and the project's documented standards — logic, structure/style, and test quality — over the scope you give it rather than the whole repo. Needs a one-line intent and the set of files/area to review.
 ---
 
-Review one code change end-to-end against two things: the **intent** it was supposed to satisfy, and the **engineering conventions this project documents for itself**. Produce a single report covering logic, structure/style, and tests. This skill is self-contained and read-only — it never modifies a file and never delegates to another skill.
+Review one code change end-to-end against two things: the **intent** it was meant to satisfy, and the **engineering conventions this project documents for itself**. Produce one report covering logic, structure/style, and tests.
 
-Carry no assumptions about language, framework, or where the conventions live. The same skill must work for any stack the repository documents. Everything stack-specific is discovered from the repository at review time; nothing is hardcoded here.
+This skill is **read-only** and self-contained: never modify, create, or suggest editing a file, never run `git diff`/`git status`, and never delegate to another skill. The output is a verdict, not a change. Carry no assumptions about language, framework, or where conventions live — discover everything from the repository at review time.
 
 ## Inputs
 
-Two inputs drive the review. If the user's message already supplies one, use it; ask only for what is genuinely missing.
+Two inputs drive the review. Use whatever the user already supplied; ask only for what is missing. Settle both before analysing.
 
-- **Intent** — what the change was supposed to accomplish, in a sentence or two (the goal, not the implementation). If absent, ask: *"What was this change supposed to do? One or two sentences — the goal, not the implementation."*
-- **Scope** — the specific files (or a clearly locatable area) to review. Review only this. Do **not** run `git diff`/`git status` to discover files, and do not pull in changes outside the stated scope. If no files or locatable area are given, ask which files or area to review.
+- **Intent** — what the change was meant to accomplish, in a sentence or two (the goal, not the implementation). If absent, ask: *"What was this change supposed to do? One or two sentences — the goal, not the implementation."*
+- **Scope** — the specific files or one clearly locatable area to review. Review only this; pull in nothing outside it. If none is given, ask which files or area to review.
 
-Wait until both are settled before running the analysis.
+## Step 1 — Analyse (inline)
 
-## Step 1 — Run the analysis (inline)
+Do the review yourself in this context; never spawn a subagent (a caller wanting fresh eyes spawns this skill itself).
 
-Do this review yourself, in this context — do not spawn a subagent. (If a caller wants this review to run with fresh eyes in an isolated context, that caller spawns this skill; the skill never spawns its own subagent.) You are strictly **read-only** throughout Step 1: never modify, create, or suggest editing any file — your output is a verdict, not a change.
+1. **Find the project's documented conventions.** These authoritative docs define how code here must be written — style, structure, layering, testing — and how review is routed per area. Follow the repository's own signposts: `CLAUDE.md` (project and user level) usually names where conventions live; a docs tree or a contributing/standards section is another common home. Do not assume a fixed path.
+2. **Match conventions to the scope files.** A project may document several stacks. Match the files — by layout, file types, and idioms as the docs describe them — to the right convention set for style/structure and for tests. If none plausibly govern these files, say so and review against intent only.
+3. **Read the governing docs in full** before judging. They are the sole source of truth for structure/style and test rules — apply their exact rule names and categories; invent nothing from memory.
+4. **Read every scope file in full** — production and test alike, not excerpts.
+5. **Evaluate three dimensions:**
+   - **Logic vs intent.** Where does the code diverge from what the intent requires? Classify each divergence as missing behaviour, wrong behaviour, or an unauthorized side effect. "There's a bug" is not a finding — state expected vs. actual and cite `file:line`.
+   - **Structure & style.** Check scope files against the style/structure docs. Use their exact rule names and categories; one row per violation at `file:line`.
+   - **Tests.** *Conventions* — check test files against the documented test conventions (naming, shape, assertion style, placement). *Completeness* — derive from the intent every scenario the change should cover (happy path, edges, error/failure, boundary), and flag each one with no matching test. If no test files are in scope, state that and list every scenario left untested.
 
-Carry no built-in assumptions about programming language, framework, or project layout, and do not assume where the project keeps its standards. Discover everything from the repository.
-
-**Procedure:**
-
-1. **Find the project's documented engineering conventions.** These are the authoritative rule docs that define how code in this project must be written — style, file/package structure, layering, and testing standards — and how reviewing them is routed per area of work. Locate them by following the repository's own signposts: a `CLAUDE.md` (project and/or user level) typically names where conventions live and links the relevant docs; a documentation tree or a standards/contributing section is another common home. Find where they actually are; do not assume a fixed path.
-
-2. **Determine which conventions govern the scope files.** A project may document standards for more than one stack. Match the files in front of you — by their layout, file types, and idioms as the docs themselves describe them — to the right set of conventions. Read whatever the docs route to for *style/structure review* and for *test review* of that stack. If you cannot find conventions that plausibly govern these files, say so explicitly and review only against the intent.
-
-3. **Read the governing convention docs in full** before judging anything. They are the sole source of truth for structure/style and test rules — apply their exact rule names and categories. Do not invent rules from general knowledge or memory.
-
-4. **Read every scope file in full** — production and test files alike — not just excerpts.
-
-5. **Evaluate the change across three dimensions:**
-
-   - **Logic vs intent.** Where does the code diverge from what the intent requires? Classify each as missing behaviour, wrong behaviour, or an unintended side effect the intent does not authorize. Cite `file:line`. "There's a bug" is not a finding — be specific about expected vs. actual.
-
-   - **Structure & style.** Check the scope files against the structure/style conventions found in step 1–3. Use the exact rule names and the categories those docs define. One row per violation, cited at `file:line`.
-
-   - **Tests.** Two parts:
-       - *Conventions* — check the test files against the project's documented test conventions (naming, shape, assertion style, placement — whatever the docs require).
-       - *Completeness* — derive from the intent the full set of scenarios the change should cover (happy path, edges, error/failure paths, boundary/corner cases) and check each against the tests actually present. Flag every scenario from the intent that has no corresponding test. If there are no test files in scope at all, state that plainly and list the scenarios that therefore go untested.
-
-**Findings format** — assemble your findings into exactly this structure to carry into Step 2:
+Assemble the findings into this structure:
 
 ```
-Conventions consulted: <where you found them + which stack's rules applied, or "none found — reviewed against intent only">
-Docs read: <comma-separated list of the rule docs you read>
+Conventions consulted: <where found + which stack's rules applied, or "none found — reviewed against intent only">
+Docs read: <comma-separated rule docs read>
 
 ### Logic
 | File:Line | Expected (from intent) | Actual (in code) | Type |
-|-----------|------------------------|------------------|------|
 (or: "Matches intent — no divergences found.")
 
 ### Style
 | File:Line | Category | Rule | Violation |
-|-----------|----------|------|-----------|
 (or: "No structure/style violations found.")
 
 ### Tests
 Conventions:
 | File:Line | Rule | Violation |
-|-----------|------|-----------|
 (or: "No test-convention violations found.")
-
 Completeness:
 | Scenario (from intent) | Covered? | Missing test |
-|------------------------|----------|--------------|
 (or: "All scenarios implied by the intent are covered.")
 ```
 
-Be precise and cite `file:line` for every code-side finding. Do not suggest fixes — only report.
+## Step 2 — Present the report
 
-## Step 2 — Present the unified report
-
-Assemble the findings from Step 1 into one report. Add the verdict and next actions yourself.
+Assemble the Step 1 findings into one report; add the verdict and next actions yourself.
 
 ```
 ## Review: <one-line intent recap>
 
-<the Step 1 findings: Conventions consulted / Docs read / Logic / Style / Tests sections>
+<Step 1 findings: Conventions consulted / Docs read / Logic / Style / Tests>
 
 ### Overall verdict
 PASS — ready to commit.
@@ -87,7 +65,7 @@ PASS — ready to commit.
 FAIL — address the items below before committing.
 
 ### Next actions
-<ordered list of the issues to fix, highest priority first; logic and missing-test gaps rank above stylistic nits>
+<issues to fix, highest priority first; logic and missing-test gaps rank above stylistic nits>
 ```
 
 End with:

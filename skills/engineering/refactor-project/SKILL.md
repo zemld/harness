@@ -1,35 +1,30 @@
 ---
 name: refactor-project
-description: Audits a project against the harness conventions for its stack and fixes every violation — restructures files, fixes imports, applies style fixes — surfacing complex behavioral changes as scoped follow-up features.
+description: Audits a project against its stack's harness conventions, applies the direct fixes, and writes up complex behavioral changes as scoped follow-ups.
+disable-model-invocation: true
 ---
 
-Audit a project end-to-end against the conventions for its stack and fix every violation. The category list and procedure are stack-specific and documented in each stack's index; this skill is a generic runner.
+Audit a project end-to-end against its stack's conventions, fix every direct violation, and surface behavioral ones as scoped follow-ups. This skill is a generic **runner**: every category, fix pattern, and command is stack-specific and lives in the stack's index — never hardcode them here.
 
-## Inputs
+**Input** — absolute path to the project root; ask if missing.
 
-Ask for any missing input:
+## Step 1 — Detect the stack and read the procedure
 
-- **Project path** — absolute path to the project root.
-
-## Step 1 — Detect the stack and read the Refactor procedure
-
-1. Inspect the project root and work out which stack it uses, matching it to an existing `docs/engineering/<stack>/` directory. Use your own judgment from the project's files — there is no fixed list of signals to rely on.
+1. Inspect the project root and judge which stack it uses; match it to an existing `docs/engineering/<stack>/` directory.
 2. If no matching `docs/engineering/<stack>/index.md` exists, stop and report the gap.
-3. Read `docs/engineering/<stack>/index.md` in full. Locate the `## Refactor project` section.
-4. Read every doc listed there. These docs are the source of truth for the rules being audited.
+3. Read that index's `## Refactor project` section, then read every doc it lists — these are the source of truth for the rules you audit.
 
-## Step 2 — Audit the project (inline)
+Done when you can name the stack, its category list, and its format/check command from the index.
 
-Run the audit yourself, in this context — do not spawn a subagent. (If a caller wants this audit isolated, that caller spawns this skill; the skill never spawns its own subagent.) Throughout Step 2 you are **read-only** — do not modify any project file while auditing; fixes happen later, in Steps 4–5.
+## Step 2 — Audit (inline, read-only)
 
-1. Read the index's `## Refactor project` section in full (already located in Step 1).
-2. Read every doc the section lists.
-3. Read the full contents of the project — every source file plus the manifest and config files the index's category list mentions.
-4. For each violation, record one row in the relevant category table below. Use the category list defined in the index's Refactor section (e.g. Structure, Style, Testing, Dependency, Transaction, Tooling for Go; Structure, State, Forms, API, Routing, Testing, Style, Tooling for frontend).
+Run the audit in this context — never spawn a subagent (an isolating caller spawns this skill itself). Stay **read-only**: modify no file until Step 4.
 
-**Report format:**
+1. Read every source file plus the manifest and config files the index's categories name.
+2. Record each violation as one row under its category, using the exact category list from the index's Refactor section.
+3. Mark each violation's complexity: `direct` (rename, move, fix import, add config, swap library) or `behavioral` (logic rewrite, state-model change, API-contract migration, test rewrite).
 
-Build the audit report in this exact structure (you write it to disk in Step 3):
+Build the report in this exact structure:
 
 ```
 # Audit Report: <project name>
@@ -42,68 +37,41 @@ Build the audit report in this exact structure (you write it to disk in Step 3):
 
 | Category | Direct | Behavioral | Total |
 |----------|--------|------------|-------|
-| <one row per category from the index's Refactor section> |
-| **Total**   | ...    | ...        | ...   |
+| <one row per index category> |  |  |  |
+| **Total** |  |  |  |
 
 ---
 
-## <Category 1>
+## <Category>
 
 | # | File:Line | Rule | Violation | Complexity |
 |---|-----------|------|-----------|------------|
 
-## <Category 2>
-
-| # | File:Line | Rule | Violation | Complexity |
-|---|-----------|------|-----------|------------|
-
-... (one table per category that has at least one violation; omit empty ones)
+(one table per category with at least one violation; omit empty ones)
 
 ---
 
 **N violation(s): D direct, B behavioral.**
 ```
 
-- **File:Line** — exact path and line.
-- **Rule** — exact rule name from the relevant doc.
-- **Violation** — what is concretely wrong at this location.
-- **Complexity** — `direct` (rename, move, fix import, add missing config file, swap library) or `behavioral` (logic rewrite, state model change, API contract migration, test rewrite). The index's Refactor section names the typical examples per stack.
+All categories clean → replace the tables with `All rules satisfied — no violations found.`
 
-If all categories are clean, replace the tables with `All rules satisfied — no violations found.`
+Done when every source file is read and every violation has a row with file:line, exact rule name, and complexity.
 
-## Step 3 — Persist, present, and confirm
+## Step 3 — Persist and confirm
 
-Write the report you built to `<project_path>/audit-report.md`. Tell the user the full report is at that path, and render the Summary table and all violation tables inline in chat.
+Write the report to `<project_path>/audit-report.md`, tell the user its path, and render the Summary and violation tables inline.
 
-If zero violations → report success and stop.
+Zero violations → report success and stop.
 
-Otherwise ask:
+Otherwise ask *"Found N violation(s): D direct (I'll fix now) and B behavioral (I'll write each up as a scoped follow-up). Proceed?"* and wait for confirmation before fixing.
 
-> *"Found N violation(s): D direct (I'll fix those now) and B behavioral (I'll write each up as a scoped follow-up feature for you to implement separately). Shall I proceed?"*
+## Step 4 — Final verification
 
-Wait for confirmation before fixing.
+Re-run the Step 2 audit scoped to only the files you changed, against the same docs, to confirm the fixes introduced no new violation. Fix any direct regression inline; report the rest.
 
-## Step 4 — Apply direct fixes
+Final report: D direct fixed, B behavioral written up, the audit-report.md path, and any open issues.
 
-For each `direct` violation, apply the fix in the current session. The index's Refactor section lists the typical direct-fix patterns for the stack — follow them. After all direct fixes, run the stack's format/check command as named in the index's Refactor section (or, if absent, find it from the project itself — a Makefile target or package script).
+## Anti-pattern
 
-## Step 5 — Write up behavioral violations as follow-ups
-
-Do not auto-fix behavioral violations — they need design, tests, and review that exceed an in-session edit. For each, write a focused, self-contained description of the scoped follow-up feature it implies: what to change, where (paths under `<project_path>`), and why. The index's Refactor section lists the typical behavioral examples for the stack — use those as templates. Collect these descriptions and present them to the user as recommended follow-ups to run through the project's normal feature design-and-implementation process. This skill stops at direct fixes; it does not implement behavioral changes itself.
-
-## Step 6 — Final verification
-
-Re-run the Step 2 audit, scoped to only the files you modified, against the same convention docs, to confirm the direct fixes introduced no new violations. If any appear, apply remaining direct fixes inline or report them to the user.
-
-Final report:
-
-- Direct violations fixed: D.
-- Behavioral violations written up as scoped follow-up features for you to implement: B.
-- Audit report: `<project_path>/audit-report.md`.
-- Any remaining open issues.
-
-## Anti-patterns
-
-- **Hardcoding stack-specific knowledge in this skill body.** Categories and fix patterns live in the index. This skill is a runner.
-- **Inventing categories not in the index.** If you see a violation that doesn't fit any category from the index, that's a signal the index is incomplete — surface it to the user rather than improvising a new category.
-- **Auto-fixing behavioral violations.** Behavioral fixes need design, tests, and review — surface them as scoped follow-up features for the user to implement separately, rather than patching them inline. Don't shortcut.
+- **Inventing a category.** A violation that fits no index category means the index is incomplete — surface that gap; don't improvise a category.

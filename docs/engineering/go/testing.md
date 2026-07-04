@@ -22,6 +22,11 @@ Use [testify](https://github.com/stretchr/testify): `require` for assertions tha
 
 **Parallel by default.** Call `t.Parallel()` at the top of the test function and at the top of each `t.Run` subtest unless the test explicitly requires serial execution.
 
+**Assertion placement — data-driven or closure-driven.** Two styles are allowed; pick whichever reads cleaner for the case at hand.
+
+- *Data-driven* (default): the table holds expected values (`wantID int64`, `wantErr error`) and the loop body does the asserting. Best when every case checks the same things.
+- *Closure-driven*: a case carries its assertions in a field, e.g. `check func(t *testing.T, id int64, err error)` or a narrower `checkErr func(t *testing.T, err error)`. Best when cases check different things and you want each case to declare its own expectations inline.
+
 ## Mocks
 
 **mockery v3.** All mocks are generated with mockery v3. Never write mocks by hand. Configuration lives in `.mockery.yml` at the service root.

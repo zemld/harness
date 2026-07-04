@@ -19,78 +19,27 @@ docs/            # Reference documentation
 
 ## Skill rules
 
+Author and refactor skills with the `/upsert-skill` skill — it enforces the rules below.
+
+### Base rules
+
 - **English only.** All skill content — `name`, `description`, and prompt body — must be written in English.
-- **One scenario per skill.** A skill covers exactly one use case. If you find yourself writing "and then" or "or", split it.
-- **Clear and unambiguous.** Every instruction in the prompt body must be precise enough that two different readers would interpret it identically. Avoid vague verbs ("handle", "process", "manage") — say exactly what action to take.
-- **No inter-skill dependencies for leaf skills.** A leaf skill must be self-contained — it does not call or depend on another skill. Only orchestrator skills may reference other skills by name.
-- **Only orchestrators spawn subagents.** A leaf skill never spawns a subagent of its own — it runs inline in whatever context invokes it. If a leaf's work should run with fresh eyes in an isolated context, the *caller* spawns the leaf; the leaf does not spawn itself. Only an orchestrator dispatches work into subagents, and it is the sole spawner — so there is exactly one level of spawning and never a subagent-spawning-a-subagent (which the harness cannot do reliably).
-- **Large skills decompose downward — unless the work is one dependent chain.** If a skill is getting long or multi-step, extract the sub-steps into separate leaf skills and have the orchestrator skill reference them. The exception is a sequential chain where each step depends on the last (write contracts → tests → implementation → drive to green): splitting that across isolated subagents fragments one dependent task across many contexts and loses state. Keep such a chain in one skill (`write-code` is the sanctioned example) and reserve separate subagents for genuinely independent or parallel work and for independent review.
-- **Skill = behavior, docs = structure.** A skill describes *behavior* — the order of operations, what to do and in what sequence ("to do X, first do this, then this"). Static, structural facts — style rules, layering, where files go, how a test is shaped, which tool stands in for dependencies — are *docs*. A behavioral sequence belongs in the skill and must never be pushed into a doc; a structural rule belongs in `docs/` and must never be duplicated into a skill.
-- **Docs over inline knowledge.** If a skill needs to convey structural *how* (conventions, patterns, placement rules), put that content in `docs/` and have the skill reference the doc path. The skill prompt stays short.
+- **Clear and unambiguous.** Every instruction must be precise enough that two readers interpret it identically. Avoid vague verbs ("handle", "process", "manage").
+- **Concise.** No more than 40 short sentences per skill body.
 
-## Skill file format
+A skill exists to wrangle determinism out of a stochastic system. The root virtue is **predictability**: the agent follows the same *process* on every run. The 8 rules are each a lever on it:
 
-```markdown
----
-name: <kebab-case>
-description: <one sentence — used by Claude to decide when to trigger this skill>
-allowed-tools: <optional — comma-separated tools, optionally path-scoped>
----
+1. **Invocation** — model-invoked (agent can fire it, costs context load) only if the agent or another skill must reach it; otherwise user-invoked (costs cognitive load).
+2. **Description** — model-invoked = triggers only, worded with the exact prompt terms; user-invoked = one human-facing line.
+3. **Information hierarchy** — steps and every-run reference inline; some-paths reference behind a pointer (progressive disclosure); co-locate a concept's rules.
+4. **Leading words** — anchor a behavior in one pretrained token (*tight*, *red*, *relentless*) and repeat the token, not the sentence.
+5. **Completion criteria** — end every step on a criterion that is checkable (done vs not-done) and demanding (forces exhaustive work), to prevent premature completion.
+6. **Pruning** — single source of truth; delete any sentence that doesn't change behavior versus the default; disclose or split when it sprawls.
+7. **Splitting** — extract a skill only when a distinct trigger needs it or observed premature completion forces a sequence boundary; prefer thin wrappers.
+8. **Shared vocabulary** — keep `CONTEXT.md` as a glossary and record hard, surprising trade-offs as minimal ADRs; create both lazily.
 
-<prompt body>
-```
-
-The `description` field is the trigger signal. Make it specific enough that Claude won't fire the skill by accident, but broad enough to catch all intended phrasings.
-
-`allowed-tools` is optional. It pre-authorizes the tools a skill needs so it runs without permission prompts — declared *in the skill*, not in any one agent's settings, so it stays agent-agnostic. Scope each tool to a relative path glob (relative paths keep it location-independent across install locations): e.g. `Read(references/**), Write(features/**)`.
+Full rules with examples + the skill file format: `skills/engineering/upsert-skill/references/authoring-rules.md`.
 
 ## Docs
 
 All reference documentation lives in `./docs/`. The directory layout is self-explanatory — browse it to find conventions for a given stack or topic. `docs/` is the single source of truth for conventions and practices: when a skill or CLAUDE.md needs to reference a rule, link to the relevant doc instead of duplicating it.
-
-## Feature workflow
-
-Features are designed and implemented iteratively, one subtask at a time, with file-based state under `<working_dir>/features/<feature-slug>/`:
-
-```
-<working_dir>/features/<feature-slug>/
-├── PRD.md           # top-level: problem, success criteria, ## Architecture, ## Subtasks list
-└── subtasks/
-    ├── 01-<slug>.md       # nested PRD: detailed design of one item from ## Subtasks
-    ├── 02-<slug>.md       # nested PRD for subtask 02
-    └── ...
-```
-
-The directory is checked into git; it travels with the code change and is removed after merge.
-
-### Single entry point
-
-Feature design has one entry point — `write-prd`. The same skill writes both shapes:
-
-- **No argument** (e.g. `/write-prd`, or "хочу добавить X") → writes a top-level `PRD.md` for the feature.
-- **Path + `#<id>` argument** (e.g. `features/foo/PRD.md#02`) → writes a nested PRD at `subtasks/<id>-<slug>.md` for one item from the parent's `## Subtasks` list, inheriting architecture from the parent.
-
-There is one schema for both — the shape difference is `Meta.parent`/`Meta.id` (absent for top-level, present for nested) and which optional sections are filled (top-level usually has `## Subtasks`; nested has `## Contracts` and `## Edge cases` instead).
-
-Decomposition is one level deep — nested PRDs go straight into implementation. If a nested PRD comes back too large, the top-level `## Subtasks` was too coarse: rewrite the top-level with finer items rather than nest another level. Plain ids (`01`, `02`, `03`, …) keep the flat `subtasks/` layout searchable.
-
-### One subtask cycle (manual)
-
-For each item in the top-level PRD's `## Subtasks` list, the user runs a fresh session:
-
-1. Write the nested PRD for the next item, producing `subtasks/<id>-<slug>.md`. The discovery conversation must restate any top-level invariant that bears on this subtask — the skill does not read the parent.
-2. If the nested PRD comes back too large to implement honestly, rewrite the top-level `## Subtasks` with finer items rather than nest deeper. Otherwise, implement.
-3. Implement the nested PRD end-to-end — design becomes code, with tests, format, and style verification along the way.
-4. Review the change against the nested PRD's intent.
-5. Run the stack's Definition of Done: tests, format, OpenAPI regen, infra updates as applicable. Per-stack details live in `docs/engineering/<stack>/index.md`.
-
-The PRD itself never tracks progress — no checkboxes, no status fields. Git history is the source of truth for what is done.
-
-### Closing the feature
-
-After every subtask in the top-level `## Subtasks` list is implemented:
-
-- Read the top-level PRD; confirm `## Architecture > Invariants` still hold against the actual code.
-- Verify the logic at the key entry points the top-level PRD names as success criteria.
-- Run the full Definition of Done across the feature, not just per-subtask.
-- Delete `features/<feature-slug>/` before merging the PR — it has served its purpose and would only add noise to future diffs.
