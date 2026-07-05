@@ -1,5 +1,5 @@
 ---
-name: write-prd
+name: create-prd
 description: Designs a feature. Writes a PRD file.
 allowed-tools: Read(references/**), Write(.features/**)
 disable-model-invocation: true
