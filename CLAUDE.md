@@ -12,10 +12,12 @@ A personal harness of agent skills and documentation. Skills are reusable instru
 skills/          # Skill definitions (one subdirectory per skill)
   <name>/
     SKILL.md     # Frontmatter + prompt body
-docs/            # Reference documentation
+docs/            # Reference documentation (knowledge-base only)
   <topic>/
     *.md
 ```
+
+Coding conventions are not under `docs/` — they live in the `read-docs` skill's `references/engineering/` and are reached by invoking `/read-docs` (see Docs below).
 
 ## Skill rules
 
@@ -42,4 +44,6 @@ Full rules with examples + the skill file format: `skills/engineering/upsert-ski
 
 ## Docs
 
-All reference documentation lives in `./docs/`. The directory layout is self-explanatory — browse it to find conventions for a given stack or topic. `docs/` is the single source of truth for conventions and practices: when a skill or CLAUDE.md needs to reference a rule, link to the relevant doc instead of duplicating it.
+**Coding conventions** — service/folder structure, style, testing, dependency choices per stack — live in the `read-docs` skill (`skills/engineering/read-docs/references/engineering/`), the single source of truth for them. Never read those files by path or duplicate their rules; invoke `/read-docs` for the stack you're working in, and it routes to the exact doc. This keeps the conventions portable to environments that load skills but not `docs/` (e.g. the Claude app).
+
+`./docs/` now holds only `knowledge-base/` — reference material that is not a coding convention.
