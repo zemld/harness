@@ -100,6 +100,19 @@ Placing it in `cmd/main.go` keeps the root free of orphaned `package main` files
 
 **What disappears with ogen:** there is no `dto/` package. All request and response types come from `ogen/`. Never write DTO structs by hand for REST endpoints.
 
+## Health & operational endpoints
+
+Liveness/readiness probes (`GET /health`) are **operational, not business logic**, so they stay **out of `api/openapi.yaml` and out of ogen**. Never model `/health` as an OpenAPI operation.
+
+A health check is a hand-written handler:
+
+- `internal/api/rest/handler/health.go` — a `HealthHandler` with `ServeHTTP` (writes `200 OK`, empty body) and `Route() string` returning `"GET /health"`.
+- `internal/api/rest/server/` mounts it on a plain `http.ServeMux`. For fx services it's provided as an fx component and started via `fx.Lifecycle`; for manually-wired services it exposes `Start()`/`Stop(ctx)`.
+
+**A service whose only REST surface is `/health` has no ogen layer at all** — no `api/openapi.yaml`, no `api/ogen.yaml`, no `internal/api/rest/ogen/`, no ogen dependency or `//go:generate` directive. Its business API is gRPC (and/or Kafka); the HTTP server exists only to answer probes. ogen is introduced only when the service gains real REST business operations.
+
+The gateway is the reference for the handwritten health handler (it also composes ogen business routes with handwritten SSE/proxy passthroughs on the same mux).
+
 ## Layering
 
 **`domain/` has zero imports from `internal/`.** No framework types, no adapter types.
