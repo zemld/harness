@@ -1,6 +1,7 @@
 ---
 name: grill-me
 description: Grills the user relentlessly about a plan or design.
+requires: [grill]
 disable-model-invocation: true
 ---
 

@@ -76,7 +76,6 @@
 ├── Makefile
 ├── .golangci.yml
 ├── .mockery.yml
-└── .tool-versions             # asdf/mise Go version pin (e.g. golang 1.25.8)
 ```
 
 ## REST API generation

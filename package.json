@@ -1,0 +1,28 @@
+{
+  "name": "harness",
+  "version": "0.1.0",
+  "description": "Interactive installer for agent skills — npx github:zemld/harness add",
+  "type": "module",
+  "bin": {
+    "harness": "dist/cli.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc",
+    "prepare": "tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@clack/prompts": "^0.11.0",
+    "ansis": "^3.17.0",
+    "mri": "^1.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "typescript": "^5.8.0",
+    "vitest": "^3.2.0"
+  }
+}
