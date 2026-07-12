@@ -19,7 +19,7 @@ Turn every acceptance criterion into one `(input → expected response)` row: th
 
 ## Step 2 — Bring the service up
 
-Launch through the project's documented path — a `Makefile` `run-local`/`run` target, or `docker/podman compose up` on the compose file under `infra/` — never by guessing an ad-hoc command. Satisfy its prerequisites first: config and secret files (`.env` from `.env.example`, secdist JSON), migrations, dependency containers. Note the ports.
+Launch through the project's documented path.
 
 ## Step 3 — Exercise
 
@@ -27,7 +27,7 @@ Call every checklist row through its real transport: `curl` or `grpcurl`. Send e
 
 ## Step 4 — Verdict and teardown
 
-Compare each response — status/code and the named body fields — to its expected row. Tear the stack down (`docker/podman compose down`, stop the `make` dependencies). Then emit:
+Compare each response — status/code and the named body fields — to its expected row. Tear the stack down. Then emit:
 
 ```
 ## Test: <one-line feature recap>
