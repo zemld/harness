@@ -3,5 +3,5 @@
 ## Installation
 
 ```
-npx github:zemld/harness
+npx github:zemld/harness add
 ```
