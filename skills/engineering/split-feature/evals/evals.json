@@ -1,0 +1,29 @@
+{
+  "skill_name": "split-feature",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Split this feature: a notification service where clients subscribe to event types, the service delivers each event to the client's URL over HTTP with retries, and clients can browse the delivery history. Every action must be written to an audit log.",
+      "expected_output": "TRACKS.md with tracks along capabilities (subscriptions, delivery, history) and the audit log recorded under Invariants. Should NOT create an 'audit' track — a cross-cutting requirement is an invariant, not a track.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "Split this feature: CRUD over a `perfume` resource — create, read, update, delete, list with pagination — exposed over HTTP and stored in Postgres.",
+      "expected_output": "One or two tracks, each delivering an outcome observable from outside (e.g. write operations, read/list operations). Should NOT split into 'domain', 'repository', 'handlers' or any other layer — a layer is not a track.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "Split this feature: users can save a search as a preset and can share a preset with another user by link. Both live in the same `presets` table.",
+      "expected_output": "Two tracks — saving presets and sharing them — with the table schema treated as the one-line contract between them. Should NOT create a third 'storage' or 'presets table' track.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "Split this feature: add a `X-Request-Id` header to every outgoing HTTP request of the service, generating one when the incoming request has none.",
+      "expected_output": "A single track. Should NOT invent tracks (generation, propagation, logging) for a feature this small.",
+      "files": []
+    }
+  ]
+}

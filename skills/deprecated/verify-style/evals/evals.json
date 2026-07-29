@@ -1,0 +1,17 @@
+{
+  "skill_name": "verify-style",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Verify style of the new perfume creation service I just implemented: internal/services/perfumes/creation/service.go and internal/services/perfumes/creation/create_perfume.go. The intent was to add a CreatePerfume operation that saves a perfume to the repository.",
+      "expected_output": "Violation table against docs/engineering/go/style.md and docs/engineering/go/service-structure.md. Should catch: business logic or method bodies inside service.go (only struct+constructor allowed), multiple operations stacked in one file, missing or incorrectly segregated repository port interfaces, any imports that violate the Clean Architecture layering (services importing concrete adapters).",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "Check structure of src/features/catalog/CatalogPage.tsx and src/features/catalog/useCatalog.ts — I just built the catalog feature for our frontend.",
+      "expected_output": "Violation table against docs/engineering/frontend/style.md and docs/engineering/frontend/project-structure.md. Should flag: direct fetch/axios calls instead of generated API hooks, Zod schema missing for API response, barrel re-exports, wrong file placement (e.g., hook not under lib/ or hooks/), any inline styles instead of Tailwind classes.",
+      "files": []
+    }
+  ]
+}

@@ -1,0 +1,73 @@
+{
+  "skill_name": "write-code",
+  "evals": [
+    {
+      "id": 1,
+      "name": "go-feature-full-sequence",
+      "prompt": "Implement a discount service operation in our Go billing service: ApplyDiscount(ctx, price, percent) returns the price reduced by percent. percent must be between 0 and 100 inclusive — anything outside that range is rejected with a domain error, and the result must never be negative. Working directory: /tmp/write-code-eval/go-billing.",
+      "expected_output": "Skill triggers, reads the project's Go convention docs first, then writes the change in the documented order — contract/types, then test doubles if any, then tests covering the cases, then the production code — and drives it to a clean build + passing tests + clean format. Reports the files it created/modified.",
+      "files": [],
+      "expectations": [
+        "The skill reads the project's Go engineering docs (style, structure, testing) before writing code, rather than inventing rules from memory.",
+        "A domain error for out-of-range percent is defined and the ApplyDiscount operation lives in its own file (not in service.go), per the Go service-structure rules.",
+        "Tests are written BEFORE or alongside the production code and cover the documented case categories: happy path, percent = 0, percent = 100, percent < 0, percent > 100, and a never-negative-result assertion.",
+        "The production code is written from the innermost layer outward; the change builds, the affected tests pass, and the formatter (e.g. `make format`) exits clean — the skill confirms all three.",
+        "The skill did NOT edit a test to make production code pass (test-freeze respected). If a correct fix had required changing a test, it would have stopped and reported that as an escalation instead.",
+        "The final output lists every file created or modified, one path per line.",
+        "The skill stayed in scope — it did not build anything the intent did not ask for."
+      ]
+    },
+    {
+      "id": 2,
+      "name": "frontend-feature-ordering",
+      "prompt": "Add a formatPrice(cents) helper and a CartTotal component to our frontend: formatPrice takes an integer number of cents and renders a USD string like \"$12.34\"; negative amounts render with the minus before the dollar sign (-1234 -> \"-$12.34\"). CartTotal shows the formatted cart total. Working directory: /tmp/write-code-eval/frontend-shop.",
+      "expected_output": "Skill triggers, reads the frontend convention docs, and writes in the documented frontend order — types/schema, then test doubles (MSW where network is involved), then tests, then the component — driving tsc + vitest + biome to green. Reports files touched.",
+      "files": [],
+      "expectations": [
+        "The skill reads the project's frontend engineering docs (style, structure, testing, and api-integration/state where relevant) before writing code.",
+        "Test doubles, where needed, use the stack's documented approach (MSW for network) — NOT a Go mocking tool like mockery.",
+        "Tests are written before/alongside the component and cover the negative-amount case (-1234 -> \"-$12.34\"), zero, and a normal positive amount.",
+        "The component follows the documented frontend style (no React.FC, no inline styles) and the change passes typecheck, the affected tests, and the formatter/linter.",
+        "The skill did NOT modify a test to force a pass (test-freeze respected).",
+        "The final output lists every file created or modified."
+      ]
+    },
+    {
+      "id": 3,
+      "name": "fix-list-intent-on-existing-code",
+      "prompt": "Here are review findings to fix in /tmp/write-code-eval/go-billing — fix them in code:\n## Review found these — fix them\n- internal/services/discount/apply_discount.go:14 — Expected: percent > 100 rejected with ErrInvalidPercent. Actual: only percent < 0 is checked, percent > 100 passes through.\n- internal/services/discount/apply_discount_test.go — Missing test for the percent > 100 case.\nWorking directory: /tmp/write-code-eval/go-billing.",
+      "expected_output": "Skill triggers and treats the fix-list as its spec: it surveys the named files, makes the precise production-code fix (reject percent > 100), adds the missing test, and drives to green. It does not rebuild the feature from scratch.",
+      "files": [],
+      "expectations": [
+        "The skill reads the named files before editing them.",
+        "It makes only the targeted fix (percent > 100 now rejected) plus the missing test — it does not rewrite or re-scaffold the whole feature.",
+        "The added test for percent > 100 is real and passes; the build and formatter are clean afterward.",
+        "It correctly distinguishes adding a missing test (allowed) from editing an existing frozen test to force a pass (not allowed).",
+        "The final output lists the files it modified."
+      ]
+    },
+    {
+      "id": 4,
+      "name": "negative-pure-review-should-not-trigger",
+      "prompt": "Don't change anything — just look at internal/services/discount/apply_discount.go and tell me whether the discount logic is correct. I only want a review, no edits.",
+      "expected_output": "write-code does NOT trigger — this is a read-only review request that belongs to review-changes. No files are modified.",
+      "files": [],
+      "expectations": [
+        "The write-code skill is NOT invoked.",
+        "No file under the project is created or modified.",
+        "If any skill is suggested, it is review-changes (read-only), not write-code."
+      ]
+    },
+    {
+      "id": 5,
+      "name": "negative-project-wide-refactor-should-not-trigger",
+      "prompt": "Audit the whole billing service against our Go conventions and bring every file up to standard.",
+      "expected_output": "write-code does NOT trigger — a project-wide audit-and-fix against conventions belongs to refactor-project, not write-code (which writes code for one stated intent).",
+      "files": [],
+      "expectations": [
+        "The write-code skill is NOT invoked.",
+        "If any skill is suggested, it is refactor-project, not write-code."
+      ]
+    }
+  ]
+}
