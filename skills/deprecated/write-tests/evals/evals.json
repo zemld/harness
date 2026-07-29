@@ -1,0 +1,23 @@
+{
+  "skill_name": "write-tests",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Write tests for the InsertPerfume method. It lives in internal/services/perfumes/creation/insert_perfume.go. The method calls r.repo.Save(ctx, perfume) and returns the saved UUID plus any error from Save.",
+      "expected_output": "Test file at internal/services/perfumes/creation/insert_perfume_test.go using table-driven tests with t.Parallel(). Covers: successful insert returns correct ID, Save returns error is propagated. Uses a mockery-generated mock for the Saver port interface. Follows docs/engineering/go/testing.md conventions.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "I need tests for the FilterByIngredients function in the frontend. It's in src/features/perfumes/lib/filter.ts — takes a list of perfumes and a list of ingredient names, returns only perfumes that contain ALL the specified ingredients.",
+      "expected_output": "Test file at src/features/perfumes/lib/filter.test.ts using Vitest. Covers: returns all perfumes when filter list is empty, returns matching perfumes for a single ingredient, returns only perfumes with all listed ingredients when multiple specified, returns empty array when no matches, handles perfumes with no ingredients field. Uses describe/it blocks, no mocks needed (pure function).",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "Add tests for the PostgreSQL repository method FindByID in internal/adapters/repository/postgres/find_by_id.go. It queries the DB for a perfume by UUID primary key and returns a domain.Perfume or an error.",
+      "expected_output": "Test file at internal/adapters/repository/postgres/find_by_id_test.go. Table-driven, t.Parallel(). Covers: found returns correctly mapped Perfume struct, not found returns domain.ErrNotFound (wrapped), DB error propagates with wrapped error message. Uses pgxmock or equivalent to stub the pool.",
+      "files": []
+    }
+  ]
+}

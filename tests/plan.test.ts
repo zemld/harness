@@ -58,6 +58,20 @@ describe('installItem', () => {
     expect(readFileSync(join(targetDir, 'references', 'r.md'), 'utf8')).toBe('ref')
   })
 
+  it('skips the evals folder while copying everything else', () => {
+    const src = tmp('harness-src-')
+    writeFileSync(join(src, 'SKILL.md'), 'body')
+    mkdirSync(join(src, 'evals'))
+    writeFileSync(join(src, 'evals', 'evals.json'), '[]')
+
+    const dest = tmp('harness-dest-')
+    const targetDir = join(dest, '.claude', 'skills', 'a')
+    installItem({ skill: skill('a', src), provider: providerById('claude')!, targetDir, status: 'new' })
+
+    expect(readFileSync(join(targetDir, 'SKILL.md'), 'utf8')).toBe('body')
+    expect(readdirSync(targetDir)).not.toContain('evals')
+  })
+
   it('overwrites cleanly, dropping files removed from the source', () => {
     const src = tmp('harness-src-')
     writeFileSync(join(src, 'SKILL.md'), 'v2')

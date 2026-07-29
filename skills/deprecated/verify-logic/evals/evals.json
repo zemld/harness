@@ -1,0 +1,17 @@
+{
+  "skill_name": "verify-logic",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Verify logic: the intent was to insert a new perfume into the database, reject duplicates by name (return ErrAlreadyExists), and return the new UUID on success. Check internal/adapters/repository/postgres/insert_perfume.go.",
+      "expected_output": "Verdict pass or a table of discrepancies. Should catch if: duplicate name check is absent or uses wrong constraint, ErrAlreadyExists is not returned (or not wrapped) on conflict, transaction is missing around the insert, returned ID does not come from the DB-generated value.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "I implemented a similarity score calculator. The intent: given two perfume ingredient lists, compute cosine similarity between their TF-IDF vectors and return a float64 in [0.0, 1.0]. Verify internal/services/recommender/scoring/cosine/calculate_similarity_score.go.",
+      "expected_output": "Verdict pass or discrepancy table. Should catch: missing zero-guard when both vectors are zero-length (avoid divide-by-zero), result not clamped or normalized to [0, 1], TF-IDF weights computed incorrectly or not at all, function returning values outside the [0,1] range.",
+      "files": []
+    }
+  ]
+}
