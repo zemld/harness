@@ -1,0 +1,4 @@
+# Codex has no CLAUDE.md analogue and reads AGENTS.md by default. This repo
+# has no AGENTS.md, so this fallback makes Codex read the existing CLAUDE.md
+# directly instead of maintaining a duplicate file that would drift.
+project_doc_fallback_filenames = ["CLAUDE.md"]

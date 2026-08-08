@@ -52,7 +52,7 @@ describe('installItem', () => {
 
     const dest = tmp('harness-dest-')
     const targetDir = join(dest, '.claude', 'skills', 'a')
-    installItem({ skill: skill('a', src), provider: providerById('claude')!, targetDir, status: 'new' })
+    installItem({ skill: skill('a', src), provider: providerById('claude')!, targetDir, status: 'new' }, new Set())
 
     expect(readFileSync(join(targetDir, 'SKILL.md'), 'utf8')).toBe('body')
     expect(readFileSync(join(targetDir, 'references', 'r.md'), 'utf8')).toBe('ref')
@@ -66,7 +66,7 @@ describe('installItem', () => {
 
     const dest = tmp('harness-dest-')
     const targetDir = join(dest, '.claude', 'skills', 'a')
-    installItem({ skill: skill('a', src), provider: providerById('claude')!, targetDir, status: 'new' })
+    installItem({ skill: skill('a', src), provider: providerById('claude')!, targetDir, status: 'new' }, new Set())
 
     expect(readFileSync(join(targetDir, 'SKILL.md'), 'utf8')).toBe('body')
     expect(readdirSync(targetDir)).not.toContain('evals')
@@ -81,9 +81,37 @@ describe('installItem', () => {
     mkdirSync(targetDir, { recursive: true })
     writeFileSync(join(targetDir, 'stale.md'), 'old')
 
-    installItem({ skill: skill('a', src), provider: providerById('claude')!, targetDir, status: 'overwrite' })
+    installItem(
+      { skill: skill('a', src), provider: providerById('claude')!, targetDir, status: 'overwrite' },
+      new Set(),
+    )
 
     expect(readdirSync(targetDir)).toEqual(['SKILL.md'])
     expect(readFileSync(join(targetDir, 'SKILL.md'), 'utf8')).toBe('v2')
+  })
+
+  it('rewrites `/skill-name` refs to `$skill-name` for codex only, leaving other providers untouched', () => {
+    const src = tmp('harness-src-')
+    writeFileSync(join(src, 'SKILL.md'), 'Then run `/test-feature` against the acceptance criteria.\nSee `/unknown-skill` too.')
+
+    const codexDest = tmp('harness-dest-')
+    const codexTarget = join(codexDest, '.agents', 'skills', 'a')
+    installItem(
+      { skill: skill('a', src), provider: providerById('codex')!, targetDir: codexTarget, status: 'new' },
+      new Set(['test-feature']),
+    )
+    expect(readFileSync(join(codexTarget, 'SKILL.md'), 'utf8')).toBe(
+      'Then run `$test-feature` against the acceptance criteria.\nSee `/unknown-skill` too.',
+    )
+
+    const claudeDest = tmp('harness-dest-')
+    const claudeTarget = join(claudeDest, '.claude', 'skills', 'a')
+    installItem(
+      { skill: skill('a', src), provider: providerById('claude')!, targetDir: claudeTarget, status: 'new' },
+      new Set(['test-feature']),
+    )
+    expect(readFileSync(join(claudeTarget, 'SKILL.md'), 'utf8')).toBe(
+      'Then run `/test-feature` against the acceptance criteria.\nSee `/unknown-skill` too.',
+    )
   })
 })
