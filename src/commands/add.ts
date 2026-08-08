@@ -83,11 +83,12 @@ export async function runAdd({ skillsRootDir, dryRun }: AddOptions): Promise<voi
   const { skills: resolved } = resolveWithDeps(state.selected, skills)
   const plan = buildPlan(resolved, providers, state.scope, cwd, home)
 
+  const allSkillNames = new Set(skills.map((sk) => sk.name))
   const s = p.spinner()
   s.start('Installing')
   let done = 0
   for (const item of plan) {
-    installItem(item)
+    installItem(item, allSkillNames)
     done += 1
     s.message(`Installing ${done}/${plan.length}`)
   }
