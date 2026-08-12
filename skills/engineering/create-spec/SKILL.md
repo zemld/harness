@@ -10,9 +10,9 @@ Read `references/spec-schema.md` for the sections and what belongs in each.
 
 ## Step 1 — Settle
 
-Fill every section only from what this session settled. Never infer material now to complete a section — the spec is the only carrier of this design into a clean implementation session, and an invented acceptance criterion reads exactly like a real one.
+Fill the spec only from material settled in this session. Never infer, complete, or derive missing material — the spec is the only carrier of this design into a clean implementation session, and an invention reads exactly like a settled fact.
 
-Completion: every section the schema names carries settled material, or you have stopped and named each unsettled section instead of writing the file.
+Completion: every settled item belongs in a section from the schema, and every absent item and inapplicable optional section is omitted.
 
 ## Step 2 — Write
 

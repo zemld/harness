@@ -46,6 +46,31 @@ security constraints. Omit the section when nothing binds.
 
 Outcomes observable from outside the system, one per line. These are read
 directly by `/test-feature`, so each must name what to do and what to see.
+
+## Technical design
+
+Include this section only when technical design was settled. Use the applicable
+subsections below, add another descriptive subsection when settled material does
+not fit them, and omit every subsection with no settled material.
+
+### Data model
+
+Tables, fields, types, relations, constraints, and indexes.
+
+### Components and interactions
+
+Component responsibilities, dependencies, and connections.
+
+### Contracts
+
+External and internal requests, responses, events, and errors.
+
+### Flows
+
+Data and control flows. Use a Mermaid `flowchart` for settled component links,
+data movement, or conditional paths, and a Mermaid `sequenceDiagram` when the
+settled order of interactions matters. Do not add missing nodes, transitions,
+or behavior to complete a diagram.
 ```
 
 ## Rules
@@ -58,3 +83,8 @@ directly by `/test-feature`, so each must name what to do and what to see.
 - Many Key decisions in one spec means the thing it covers is too big — split the
   feature into tracks before specifying it.
 - Requirements state the outcome, not the implementation route to it.
+- Record a choice and its rationale under Decisions; record the resulting
+  structure under Technical design. Do not repeat the same material in both.
+- Record only settled material. Never infer, complete, or derive missing
+  requirements, decisions, design details, diagram elements, or sections; omit
+  them.
