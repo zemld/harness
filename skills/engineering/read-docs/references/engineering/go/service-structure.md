@@ -125,6 +125,37 @@ The gateway is the reference for the handwritten health handler (it also compose
 
 **Incoming service interfaces live in `domain/<bounded_context>/service.go`.** Every service that other code depends on must declare its interface in `domain/` — not in `internal/services/<name>/interfaces.go`. This applies to all callers: REST handlers, agents, other services. Example: `domain.INNSearchService`, `domain.RelevanceService`. The implementation lives in `internal/services/`; the contract lives in `domain/`.
 
+### `GO-ARCH-REPOSITORY-01` — repository responsibility (`MUST`)
+
+- **Condition:** the change adds or modifies a repository method.
+- **Requirement:** a repository performs storage I/O and data mapping; the service owns business validation, multi-operation orchestration, and coordination between repositories.
+- **PASS:** the method contains only queries to its own storage, data mapping, and infrastructure error handling; port sequencing is visible in the service.
+- **FAIL:** the repository makes a business decision, calls another repository, or assembles a use case.
+- **N/A:** the change does not affect a repository.
+
+### `GO-ARCH-PORT-01` — outbound contract location (`MUST`)
+
+- **Condition:** a service depends on external I/O through a project-owned interface.
+- **Requirement:** the outbound contract lives in `ports/` and its concrete implementation lives in `adapters/`; do not declare the contract locally beside the adapter.
+- **PASS:** the service imports the port, the adapter implements it, and DI binds them in the composition root.
+- **FAIL:** a service or adapter declares a local interface that is effectively a cross-layer port.
+- **Exception:** a framework-owned interface that the project does not control.
+
+### `GO-ARCH-PORT-02` — repository capability composition (`DEFAULT`)
+
+- **Condition:** one service needs the complete set of several narrow interfaces implemented by the same storage adapter.
+- **Requirement:** compose those capabilities into one named `Repository` contract instead of duplicating top-level contracts for the same consumer.
+- **PASS:** the consumer depends on one aggregate interface, while narrower consumers may still accept only the capability they need.
+- **FAIL:** one consumer accepts several interfaces from the same implementation without independent substitutability.
+- **N/A:** the capabilities belong to different storage scopes or different consumers.
+
+### `GO-ARCH-OWNERSHIP-01` — runtime resource ownership (`MUST`)
+
+- **Condition:** a component creates a client, listener, connection, background loop, or another closeable runtime resource.
+- **Requirement:** the creating component owns the resource's start and close operations; the composition root only registers the completed lifecycle.
+- **PASS:** the constructor creates the resource, the same component implements or registers its `Start`/`Stop`, and the application does not manage resource internals.
+- **FAIL:** one module creates the resource while an unrelated module starts or closes it, or the resource is never closed.
+
 ## Agents
 
 Agents are LLM-driven orchestrators — a layer of their own beside `services/`, obeying the same inward-pointing dependency rule. An agent definition is wiring only (model, instruction, tools, sub-agents); it holds no business logic.
@@ -138,6 +169,14 @@ Agents are LLM-driven orchestrators — a layer of their own beside `services/`,
 **A model that does no I/O is a service, not an adapter.** A model implementation that only shapes a request, calls a client port, and parses the response is a service (`internal/services/<model>/`); it works with any provider client returning the same response contract. The provider client that makes the actual call is an outbound client — `adapters/clients/<provider>/` behind a `ports/clients/` port.
 
 **Framework interfaces are exempt from the `domain/` contract rule.** Agents, tools, and custom model implementations satisfy interfaces the framework owns, not ours — so their contracts are not declared in `domain/` (that rule is for our own service contracts).
+
+### `GO-AGENT-01` — agent invocation ownership (`MUST`)
+
+- **Condition:** a use case invokes an LLM agent or tool runner.
+- **Requirement:** the agent package defines the agent and tools; the service creates invocation context, owns the runner and session, and maps the result to a domain outcome.
+- **PASS:** the agent definition does not orchestrate business ports, and the service owns the complete invocation behind a domain contract.
+- **FAIL:** the agent package owns use-case orchestration, or a transport calls a concrete agent directly.
+- **Exception:** a framework-required bootstrap hook with no business branching.
 
 ## Kafka & messaging
 

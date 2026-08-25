@@ -9,6 +9,32 @@ Sibling docs in this directory:
 - [testing.md](./testing.md) — table-driven, parallel, AAA, mockery v3.
 - [dependencies.md](./dependencies.md) — which library to use for each concern.
 
+## ID-bearing rule statuses
+
+For rules with an explicit ID, report `Rule ID | Status | Evidence`.
+
+- `PASS` — the requirement is satisfied, or a documented exception is proven.
+- `FAIL` — the applicability condition holds and the requirement is violated.
+- `N/A` — the applicability condition does not hold.
+- `BLOCKED` — the rule applies, but the contract or available evidence is insufficient to decide.
+
+Rule types:
+
+- `MUST` — mandatory invariant.
+- `DEFAULT` — default design; deviation requires the rule's exception and evidence.
+- `REVIEW_TRIGGER` — requires justification review but is not a violation by itself.
+
+Do not assign these statuses to conventions without an explicit rule ID.
+
+### `GO-CI-01` — explicit CI (`DEFAULT`)
+
+- **Condition:** a change adds a service or modifies build, test, or CI behavior in a repository with active CI.
+- **Requirement:** add or update explicit build and test checks using the project's nearest current workflow as the convention.
+- **PASS:** CI executes the changed target, and the evidence names the workflow used as the analogue.
+- **FAIL:** the changed target has no check, a placeholder remains, or the new workflow diverges from the current project convention without justification.
+- **N/A:** the repository has no active CI, or the change does not affect a service, build, tests, or CI.
+- **BLOCKED:** the project's current CI convention cannot be determined.
+
 ## Scaffold project
 
 Read:
@@ -44,7 +70,7 @@ Categories:
 - **Transaction** — repository writes wrap all operations in a single `pgx` transaction (CLAUDE.md rule).
 - **Tooling** — `.golangci.yml` exists; `.mockery.yml` exists if mocks are present; `Makefile` has a `format` target.
 
-Per-violation row: `File:Line | Rule | Violation | Complexity (direct | behavioral)`.
+For ID-bearing rules use `File:Line | Rule ID | Status | Evidence | Complexity`; for other conventions keep `File:Line | Rule | Violation | Complexity`.
 
 Direct fixes (apply in-session): file renames, moving operations out of `service.go`, fixing interface names, splitting merged operations, adding missing `.golangci.yml` / `.mockery.yml`, correcting import paths, removing locally redeclared port interfaces, extracting nested blocks, splitting long functions, merging extra return values into a struct, removing bool flag params by splitting into two functions, inverting conditions for early returns.
 

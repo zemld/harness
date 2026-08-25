@@ -30,6 +30,17 @@ Reflection-based DI container. Replaces manual wiring in `app.go` with `fx.Provi
 
 PostgreSQL driver. Always use `pgxpool` (connection pool), never a single connection.
 
+#### `GO-DB-READ-01` — read source selection (`DEFAULT`)
+
+- **Condition:** an operation reads data and can choose a primary or replica.
+- **Requirement:** use the replica; use the primary only for an explicit consistency requirement such as mandatory read-after-write behavior.
+- **PASS:** the read uses a replica, or the primary selection is accompanied by a stated and verified consistency guarantee.
+- **FAIL:** the read uses the primary without a correctness-relevant reason.
+- **N/A:** the operation writes data, does not access PostgreSQL, or cannot select a source.
+- **BLOCKED:** the ticket and calling code do not establish the required consistency.
+- **Exception:** a documented database or library limitation prevents replica reads.
+- **Evidence:** the connection-selection call and the consistency requirement from the ticket, contract, or test.
+
 ---
 
 ### DB migrations
