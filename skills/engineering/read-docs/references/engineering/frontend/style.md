@@ -10,6 +10,8 @@ These rules are stricter or more specific than Biome's defaults and take precede
 
 **Function components only.** No class components. State, lifecycle, and side effects all go through hooks. A class component is grounds for splitting or rewriting.
 
+**Action names.** Start project-defined function and method names with a verb that states their action, such as `loadUser`, `validateForm`, or `calculateTotal`. React components and names required by language, library, tooling, or interface contracts are exceptions.
+
 **Props typed via `interface`, not `React.FC`.** Declare `interface ButtonProps { ... }` and use `function Button(props: ButtonProps)`. Never use `React.FC` or `React.FunctionComponent` — they imply `children` even when none is intended and break generic component typing.
 
 **Component body budget: ~150 lines.** Longer is a smell. Split by extracting either a child component (UI responsibility) or a custom hook (state/effect responsibility). Never split by introducing a `bool` prop that toggles behavior — that fuses two components into one.
