@@ -82,6 +82,8 @@ These rules are stricter or more specific than Uber's guide and take precedence 
 
 **No flag arguments.** A `bool` parameter that switches behavior is two functions fused into one. Split them.
 
+**Action names.** Start project-defined function and method names with a verb that states their action, such as `LoadUser`, `ValidateOrder`, or `CalculateTotal`. Keep conventional names required by constructors, language or tooling contracts, and implemented interfaces, such as `NewXxx`, `String`, and `Error`.
+
 **Early returns over nesting.** Handle errors and edge cases at the top of the function. Keep the happy path at the bottom indentation level.
 
 **Comments.** Only write a comment when the *why* is non-obvious: a hidden constraint, a subtle invariant, a workaround for a specific bug. Never describe *what* the code does — well-named identifiers do that.
