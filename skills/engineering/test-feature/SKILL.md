@@ -1,43 +1,37 @@
 ---
 name: test-feature
-description: Runs a feature's real API and verifies it against the acceptance criteria — brings the service up locally, calls its live HTTP/gRPC endpoints, and reports pass/fail per criterion.
-disable-model-invocation: true
+description: Use for live acceptance testing through real HTTP/gRPC APIs when implementation is ready or another skill requests `/test-feature`.
 ---
 
-Bring the service up and drive its **real** API until the feature's intended behavior is observed live.
+Read `CONTEXT.md` if present and use its vocabulary in the report.
 
-## Inputs
+## Inputs and checklist
 
-Settle both before running:
+Collect the source acceptance criteria, endpoint scope, intended build identity, and approved local or testing environment.
+Resolve missing scope or target decisions before sending requests.
+Map every in-scope criterion to requests, expected status codes, response fields, and observable side effects.
+Use multiple cases when one request cannot establish a criterion.
+Close the checklist only when every criterion has a concrete live observation plan.
+Do not replace required API acceptance with mocks or introduce new public endpoints to make a test possible.
 
-- **Acceptance criteria** — the observable outcomes the feature must satisfy.
-- **Scope** — which endpoints or feature area to exercise. Call only these.
+## Readiness
 
-## Step 1 — Build the checklist
+Check environment access, documented readiness, and availability of every scoped transport before starting scenarios.
+Launch a local stack through the documented path only when local execution is the chosen target.
+Verify that the running build contains the intended diff; record the target and build evidence.
+Close readiness only when the intended build is reachable through every required transport.
+If a prerequisite is unavailable, report BLOCKED with its evidence instead of repeatedly retrying unchanged conditions.
 
-Turn every acceptance criterion into one `(input → expected response)` row: the request to send and the status/code plus body fields to expect. Done when each criterion maps to exactly one row and nothing in scope is left unrepresented.
+## Exercise
 
-## Step 2 — Bring the service up
+Call every checklist case through real HTTP/gRPC transport using the project's supported client or `curl`/`grpcurl`.
+Restrict calls to the agreed scope and record each input, response, and required side-effect observation.
+Close execution only when every case has an observed result or an explicit failure or blocker.
 
-Launch through the project's documented path.
+## Verdict and teardown
 
-## Step 3 — Exercise
-
-Call every checklist row through its real transport: `curl` or `grpcurl`. Send each row's input. Done when every row has an observed live response — no row left un-called and no failure swallowed as "probably fine".
-
-## Step 4 — Verdict and teardown
-
-Compare each response — status/code and the named body fields — to its expected row. Tear the stack down. Then emit:
-
-```
-## Test: <one-line feature recap>
-
-| Acceptance criterion | Input | Expected | Observed | Pass? |
-
-### Overall verdict
-PASS — every criterion observed passing.
-  OR
-FAIL — the rows marked ✗ above; live behavior diverges from the acceptance criteria.
-```
-
-`PASS` only when every criterion is observed passing; a single divergence or unreachable endpoint is `FAIL`.
+Compare every observed status, named field, and side effect with its expected value.
+Tear down only resources started by this run, including after failures; never stop a shared testing environment.
+Report one row per case with criterion, input, expected, observed, and verdict, followed by target and build identity.
+Return PASS only when every in-scope criterion is observed passing on the intended build.
+Otherwise return FAIL for demonstrated behavior divergences or BLOCKED for missing verification, listing both when they coexist.
