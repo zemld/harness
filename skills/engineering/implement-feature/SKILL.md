@@ -1,55 +1,31 @@
 ---
 name: implement-feature
-description: Implements one spec in stable batches and leaves a reviewed, acceptance-tested diff ready for a pull request.
+description: Implements one spec to a stable, reviewed, acceptance-tested diff.
 disable-model-invocation: true
 ---
 
 ## Fit
 
-Read the supplied spec and `CONTEXT.md` if present, using its vocabulary for naming.
-Run `/read-docs` for the project stack before editing.
-Trace the affected entry points, services, ports, adapters, consumers, and nearest reusable implementations.
-Build a compact implementation map referencing the spec revision, parent requirements applicable to this task, approved clarifications, and explicit non-goals.
-For every in-scope requirement, record the owning layer, reused components, minimal additions, affected consumers, invariants, and acceptance method.
-Justify each new entity, queue, or lifecycle against a requirement and an inspected existing pattern.
-Keep business requirements in the spec; the map indexes their implementation and verification rather than becoming another spec.
-Retrieve missing facts independently and ask the user only about unresolved requirements, scope, or contradictory decisions.
-Identify the documented build, codegen, formatting, static-check, full-test, and acceptance commands.
-Check prerequisites and acceptance feasibility before implementation, including transport availability and environment access.
-A foundation task may use integration acceptance instead of live API acceptance only when the agreed criteria explicitly allow it.
-Close fit only when every requirement has an implementation and verification mapping and no unresolved prerequisite blocks that plan.
+Read the authoritative spec directly and `CONTEXT.md` if present, using its vocabulary for names; run `/read-docs` for the project stack.
+Pin the spec locator and revision or digest, the diff base revision, approved clarifications, and explicit non-goals.
+Map every in-scope requirement to its affected code and acceptance method, using existing patterns where suitable.
+Identify required codegen, formatting, static, full-test, and acceptance checks and confirm their prerequisites.
+Resolve missing requirements or scope decisions before coding; fit closes when every requirement has a code and verification path.
 
-## Batch implementation and checks
+## Implement and verify
 
-Complete one implementation batch, including its interfaces, models, behavior tests, implementation, and required infrastructure.
-Do not trigger full tests merely because a file changed or an implementation stage ended.
-On the completed batch, run required codegen, formatting, and static checks before the project's required full test command.
-Do not substitute targeted tests for a mandatory full suite without explicit user authorization.
-Repair failures as a batch and repeat the affected checks before review, without weakening correct expectations.
-Record commands, verdict-bearing output, diff identity, and relevant environment identity for each check.
-Close the batch only when required checks pass on its stable diff and every new behavior has its required tests.
-For a blocked check, record the failing command and evidence distinguishing code failure from an environment blocker.
-Do not repeat an identical blocked command without changed conditions; report the blocker without claiming the gate passed.
+Give a code-writer subagent the spec locator, pinned identity, base revision, scope, and any prior arbitration record; use the configured `code-writer` when available.
+Require it to read the source itself and return a local diff with check results; do not substitute a retold spec for the source.
+On the stable diff, run the project's required checks, including the full suite when mandatory; record commands, results, diff identity, and environment.
+Repair code failures as one batch and repeat affected checks; report an unchanged environment blocker without repeating the same command.
+Implementation closes when the required checks pass on the current diff and each new behavior has tests.
 
-## Review and repair
+## Review and acceptance
 
-Run `/review-changes` in a separate subagent with the source spec, implementation map, base revision, complete current diff, and check evidence.
-For later rounds, also supply the previous reviewed diff, coverage ledger, reports, and arbitration record for incremental review.
-After all requested reviews return, spawn a fresh independent `/analyze-review-issues` subagent with the same context and complete issue history.
-Retain its stable issue decisions and root-cause groups across rounds, resolving `WAITING FOR USER` before review-driven edits.
-Apply all accepted fixes as one batch, with a regression check for each root-cause group.
-After that batch, return to batch checks and review rather than restarting fit unless requirements or architectural assumptions changed.
-Track open root-cause groups after arbitration in each round.
-After two consecutive repair rounds without reducing their count, pause automatic edits and diagnose the repeated cause before recording a revised repair plan.
-This pause never dismisses unresolved defects; ask the user only if the revised plan requires a scope or requirements decision.
-Close review only when coverage is complete and arbitration is `CLEAR` on the current diff.
-
-## Acceptance and completion
-
-After review closes, run `/test-feature` for all in-scope real-API criteria and run the mapped checks for other agreed acceptance criteria.
-Repair acceptance failures as a batch and return through checks and review.
-Reuse passing check evidence only while its diff, requirements, and relevant environment remain unchanged.
-Do not rerun full tests solely because a read-only review finished.
-Report changed files, commands and verdicts, the final diff identity, and every unverified criterion.
-Return PASS only when fit, batch checks, review, and all in-scope acceptance criteria pass for the final unchanged diff.
-Otherwise return FAIL or BLOCKED with the remaining defects or evidenced prerequisites; arbitration cannot waive those gates.
+Run `/review-changes` against the pinned spec and current diff, then run `/analyze-review-issues` on every review report.
+Give accepted root-cause groups to the code writer, then repeat affected checks and review on the repaired diff.
+After two repair rounds without reducing open root-cause groups, diagnose the repeated cause and revise the repair plan before further edits.
+Review closes only when `/review-changes` accounts for every changed hunk and arbitration returns `CLEAR` for the current stable diff.
+Run `/test-feature` for applicable live acceptance criteria and the mapped checks for other criteria; send failures back through implementation, checks, and review.
+Reuse passing evidence only while its diff, requirements, and relevant environment remain unchanged.
+Return PASS only when fit, required checks, review, and every in-scope acceptance criterion pass on the final diff; otherwise report FAIL or BLOCKED with evidence and unverified criteria.
