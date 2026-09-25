@@ -1,6 +1,6 @@
-import { cpSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { copyFileSync, cpSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
-import type { PlanItem } from './plan.js'
+import type { AgentPlanItem, PlanItem } from './plan.js'
 import { rewriteSkillReferences } from './skill-refs.js'
 
 /**
@@ -27,6 +27,12 @@ export function installItem(item: PlanItem, allSkillNames: ReadonlySet<string>):
   if (item.provider.id === 'codex') {
     rewriteSkillReferencesInDir(item.targetDir, allSkillNames)
   }
+}
+
+export function installAgent(item: AgentPlanItem): void {
+  mkdirSync(dirname(item.targetFile), { recursive: true })
+  rmSync(item.targetFile, { force: true })
+  copyFileSync(item.agent.file, item.targetFile)
 }
 
 function rewriteSkillReferencesInDir(dir: string, skillNames: ReadonlySet<string>): void {
