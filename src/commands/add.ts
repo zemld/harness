@@ -1,32 +1,35 @@
 import { homedir } from 'node:os'
 import * as p from '@clack/prompts'
 import ansis from 'ansis'
-import { installItem } from '../core/install.js'
-import { buildPlan, type PlanItem } from '../core/plan.js'
+import { discoverAgents, type Agent } from '../core/agents.js'
+import { installAgent, installItem } from '../core/install.js'
+import { buildAgentPlan, buildPlan, type AgentPlanItem, type PlanItem } from '../core/plan.js'
 import { isDetected, PROVIDERS, type Scope } from '../core/providers.js'
 import { discoverSkills, resolveWithDeps, type Skill } from '../core/skills.js'
 
 export interface AddOptions {
   skillsRootDir: string
+  agentsRootDir: string
   dryRun: boolean
 }
 
-type Step = { kind: 'providers' } | { kind: 'scope' } | { kind: 'skills'; topic: string } | { kind: 'confirm' }
+type Step = { kind: 'providers' } | { kind: 'scope' } | { kind: 'skills'; topic: string } | { kind: 'agents' } | { kind: 'confirm' }
 
-export async function runAdd({ skillsRootDir, dryRun }: AddOptions): Promise<void> {
+export async function runAdd({ skillsRootDir, agentsRootDir, dryRun }: AddOptions): Promise<void> {
   const cwd = process.cwd()
   const home = homedir()
 
-  p.intro(ansis.bold('harness') + ansis.dim(' · install agent skills · Esc = back'))
+  p.intro(ansis.bold('harness') + ansis.dim(' · install skills and Codex agents · Esc = back'))
 
   const skills = discoverSkills(skillsRootDir)
-  if (skills.length === 0) {
-    p.cancel('No skills found in this repository.')
+  const agents = discoverAgents(agentsRootDir)
+  if (skills.length === 0 && agents.length === 0) {
+    p.cancel('No skills or Codex agents found in this repository.')
     process.exit(1)
   }
 
   const detected = PROVIDERS.filter((pr) => isDetected(pr, home)).map((pr) => pr.id)
-  const state = { providers: detected, scope: 'project' as Scope, selected: [] as string[] }
+  const state = { providers: detected, scope: 'project' as Scope, selected: [] as string[], selectedAgents: [] as string[] }
 
   // One step per topic keeps every skill list short: no scrolling past one
   // category to reach the next. Esc walks one step back; from the first step it
@@ -36,8 +39,15 @@ export async function runAdd({ skillsRootDir, dryRun }: AddOptions): Promise<voi
     { kind: 'providers' },
     { kind: 'scope' },
     ...topics.map((topic): Step => ({ kind: 'skills', topic })),
+    { kind: 'agents' },
     { kind: 'confirm' },
   ]
+
+  const move = (index: number, direction: -1 | 1): number => {
+    let next = index + direction
+    if (steps[next]?.kind === 'agents' && (!state.providers.includes('codex') || agents.length === 0)) next += direction
+    return next
+  }
 
   let i = 0
   while (i < steps.length) {
@@ -47,33 +57,40 @@ export async function runAdd({ skillsRootDir, dryRun }: AddOptions): Promise<voi
       const r = await pickProviders(detected, state.providers)
       if (r === 'CANCEL') return exit()
       state.providers = r
-      i += 1
+      i = move(i, 1)
     } else if (step.kind === 'scope') {
       const r = await pickScope(cwd, home, state.scope)
-      if (r === 'CANCEL') i -= 1
+      if (r === 'CANCEL') i = move(i, -1)
       else {
         state.scope = r
-        i += 1
+        i = move(i, 1)
       }
     } else if (step.kind === 'skills') {
       const topicSkills = skills.filter((s) => s.topic === step.topic)
       const names = topicSkills.map((s) => s.name)
       const initial = state.selected.filter((n) => names.includes(n))
       const r = await pickTopicSkills(step.topic, topicSkills, initial)
-      if (r === 'CANCEL') i -= 1
+      if (r === 'CANCEL') i = move(i, -1)
       else {
         state.selected = [...state.selected.filter((n) => !names.includes(n)), ...r]
-        i += 1
+        i = move(i, 1)
+      }
+    } else if (step.kind === 'agents') {
+      const r = await pickAgents(agents, state.selectedAgents)
+      if (r === 'CANCEL') i = move(i, -1)
+      else {
+        state.selectedAgents = r
+        i = move(i, 1)
       }
     } else {
-      if (state.selected.length === 0) {
-        p.log.warn('Pick at least one skill.')
-        i -= 1
+      if (state.selected.length === 0 && (!state.providers.includes('codex') || state.selectedAgents.length === 0)) {
+        p.log.warn('Pick at least one skill or Codex agent.')
+        i = move(i, -1)
         continue
       }
-      const r = await confirmStep(skills, state.providers, state.scope, state.selected, dryRun, home, cwd)
+      const r = await confirmStep(skills, agents, state.providers, state.scope, state.selected, state.selectedAgents, dryRun, home, cwd)
       if (r === 'ABORT') return exit()
-      if (r === 'BACK') i -= 1
+      if (r === 'BACK') i = move(i, -1)
       else if (r === 'DRYRUN') return
       else break // GO
     }
@@ -81,21 +98,29 @@ export async function runAdd({ skillsRootDir, dryRun }: AddOptions): Promise<voi
 
   const providers = PROVIDERS.filter((pr) => state.providers.includes(pr.id))
   const { skills: resolved } = resolveWithDeps(state.selected, skills)
-  const plan = buildPlan(resolved, providers, state.scope, cwd, home)
+  const skillPlan = buildPlan(resolved, providers, state.scope, cwd, home)
+  const selectedAgents = state.providers.includes('codex') ? agents.filter((a) => state.selectedAgents.includes(a.name)) : []
+  const agentPlan = buildAgentPlan(selectedAgents, state.scope, cwd, home)
+  const fileCount = skillPlan.length + agentPlan.length
 
   const allSkillNames = new Set(skills.map((sk) => sk.name))
   const s = p.spinner()
   s.start('Installing')
   let done = 0
-  for (const item of plan) {
+  for (const item of skillPlan) {
     installItem(item, allSkillNames)
     done += 1
-    s.message(`Installing ${done}/${plan.length}`)
+    s.message(`Installing ${done}/${fileCount}`)
   }
-  s.stop(ansis.green(`Installed ${plan.length} file(s)`))
+  for (const item of agentPlan) {
+    installAgent(item)
+    done += 1
+    s.message(`Installing ${done}/${fileCount}`)
+  }
+  s.stop(ansis.green(`Installed ${fileCount} item(s)`))
 
   p.note(renderNextSteps(), 'next steps')
-  p.outro(ansis.green(`done · ${resolved.length} skills → ${providers.length} providers`))
+  p.outro(ansis.green(`done · ${resolved.length} skills, ${selectedAgents.length} Codex agents`))
 }
 
 async function pickProviders(detected: string[], initial: string[]): Promise<string[] | 'CANCEL'> {
@@ -142,20 +167,39 @@ async function pickTopicSkills(
   return res
 }
 
+async function pickAgents(agents: Agent[], initial: string[]): Promise<string[] | 'CANCEL'> {
+  const res = await p.multiselect<string>({
+    message: `Select ${ansis.cyan('Codex agents')}  ${ansis.dim('(space · a = all/none · empty = skip)')}`,
+    options: agents.map((agent) => ({ value: agent.name, label: agent.name, hint: agent.description })),
+    initialValues: initial,
+    required: false,
+  })
+  if (p.isCancel(res)) return 'CANCEL'
+  return res
+}
+
 async function confirmStep(
   skills: Skill[],
+  agents: Agent[],
   providerIds: string[],
   scope: Scope,
   selected: string[],
+  selectedAgents: string[],
   dryRun: boolean,
   home: string,
   cwd: string,
 ): Promise<'GO' | 'DRYRUN' | 'BACK' | 'ABORT'> {
   const providers = PROVIDERS.filter((pr) => providerIds.includes(pr.id))
   const { skills: resolved, added } = resolveWithDeps(selected, skills)
-  const plan = buildPlan(resolved, providers, scope, cwd, home)
+  const skillPlan = buildPlan(resolved, providers, scope, cwd, home)
+  const agentPlan = buildAgentPlan(
+    providerIds.includes('codex') ? agents.filter((a) => selectedAgents.includes(a.name)) : [],
+    scope,
+    cwd,
+    home,
+  )
 
-  p.note(renderReview(plan, resolved, providers, scope, added, home, cwd), 'Review')
+  p.note(renderReview(skillPlan, agentPlan, resolved, providers, scope, added, home, cwd), 'Review')
 
   if (dryRun) {
     p.outro(ansis.dim('dry run · nothing written · drop --dry-run to install'))
@@ -163,7 +207,7 @@ async function confirmStep(
   }
 
   const action = await p.select<'go' | 'cancel'>({
-    message: `Install ${plan.length} file(s)?  ${ansis.dim('(Esc = back)')}`,
+    message: `Install ${skillPlan.length + agentPlan.length} item(s)?  ${ansis.dim('(Esc = back)')}`,
     options: [
       { value: 'go', label: 'Install' },
       { value: 'cancel', label: 'Cancel' },
@@ -176,7 +220,8 @@ async function confirmStep(
 }
 
 function renderReview(
-  plan: PlanItem[],
+  skillPlan: PlanItem[],
+  agentPlan: AgentPlanItem[],
   resolved: Skill[],
   providers: { label: string }[],
   scope: Scope,
@@ -199,10 +244,17 @@ function renderReview(
     lines.push(`  ${s.name}${addedSet.has(s.name) ? ansis.magenta('  +dep') : ''}`)
   }
 
-  lines.push('', ansis.cyan('files') + ansis.dim(` · ${plan.length}`))
-  for (const item of plan) {
+  lines.push('', ansis.cyan('Codex agents') + ansis.dim(` · ${agentPlan.length}`))
+  for (const item of agentPlan) lines.push(`  ${item.agent.name}`)
+
+  lines.push('', ansis.cyan('destinations') + ansis.dim(` · ${skillPlan.length + agentPlan.length}`))
+  for (const item of skillPlan) {
     const tag = item.status === 'overwrite' ? ansis.yellow('~') : ansis.green('+')
     lines.push(`  ${tag} ${shorten(item.targetDir, home, cwd)}`)
+  }
+  for (const item of agentPlan) {
+    const tag = item.status === 'overwrite' ? ansis.yellow('~') : ansis.green('+')
+    lines.push(`  ${tag} ${shorten(item.targetFile, home, cwd)}`)
   }
 
   return lines.join('\n')
@@ -210,7 +262,7 @@ function renderReview(
 
 function renderNextSteps(): string {
   return [
-    `${ansis.cyan('run')}     try a skill in your agent`,
+    `${ansis.cyan('run')}     try an installed skill or agent`,
     `${ansis.cyan('update')}  re-run add — it always overwrites`,
     `${ansis.cyan('list')}    npx github:zemld/harness list`,
   ].join('\n')

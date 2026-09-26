@@ -1,5 +1,6 @@
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
+import type { Agent } from './agents.js'
 import { type Provider, type Scope, skillsRoot } from './providers.js'
 import type { Skill } from './skills.js'
 
@@ -8,6 +9,12 @@ export interface PlanItem {
   skill: Skill
   provider: Provider
   targetDir: string
+  status: 'new' | 'overwrite'
+}
+
+export interface AgentPlanItem {
+  agent: Agent
+  targetFile: string
   status: 'new' | 'overwrite'
 }
 
@@ -38,4 +45,13 @@ export function buildPlan(
   }
 
   return plan
+}
+
+/** Compute Codex agent destinations for the selected scope. */
+export function buildAgentPlan(agents: Agent[], scope: Scope, cwd: string, home: string): AgentPlanItem[] {
+  const root = join(scope === 'project' ? cwd : home, '.codex', 'agents')
+  return agents.map((agent) => {
+    const targetFile = join(root, `${agent.name}.toml`)
+    return { agent, targetFile, status: existsSync(targetFile) ? 'overwrite' : 'new' }
+  })
 }
