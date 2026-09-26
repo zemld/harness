@@ -46,9 +46,9 @@ export const PROVIDERS: Provider[] = [
   {
     id: 'codex',
     label: 'Codex',
-    projectDir: ['.agents', 'skills'],
-    globalDir: ['.agents', 'skills'],
-    detect: [['.codex'], ['.agents']],
+    projectDir: ['.codex', 'skills'],
+    globalDir: ['.codex', 'skills'],
+    detect: [['.codex']],
   },
   {
     id: 'delta',

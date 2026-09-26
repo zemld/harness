@@ -63,7 +63,7 @@ describe('Delta wizard', () => {
     }
   })
 
-  it('blocks a global Codex/Delta skill collision before installing', async () => {
+  it('previews separate global Codex and Delta skill destinations', async () => {
     const dirs = sources()
     const skillDir = join(dirs.skillsRootDir, 'engineering', 'review')
     mkdirSync(skillDir, { recursive: true })
@@ -77,7 +77,10 @@ describe('Delta wizard', () => {
 
     await runAdd({ ...dirs, dryRun: true })
 
-    expect(prompts.log.error.mock.calls[0][0]).toContain('share ~/.agents/skills')
-    expect(prompts.outro).not.toHaveBeenCalledWith(expect.stringContaining('Installed'))
+    expect(prompts.log.error).not.toHaveBeenCalled()
+    const review = prompts.note.mock.calls[0][0]
+    expect(review).toContain('.codex/skills/review')
+    expect(review).toContain('.agents/skills/review')
+    expect(prompts.outro).toHaveBeenCalledWith(expect.stringContaining('dry run · nothing written'))
   })
 })

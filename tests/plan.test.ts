@@ -42,15 +42,37 @@ describe('buildPlan', () => {
     expect(plan.find((i) => i.skill.name === 'b')!.status).toBe('new')
   })
 
-  it('separates Codex and Delta project skills but flags their global collision', () => {
+  it('separates Codex and Delta skills in both scopes', () => {
     const providers = [providerById('codex')!, providerById('delta')!]
     expect(conflictingSkillTargets(buildPlan([skill('a', '/s/a')], providers, 'project', '/repo', '/home'))).toEqual([])
     expect(conflictingSkillTargets(buildPlan([skill('a', '/s/a')], providers, 'global', '/repo', '/home')))
-      .toEqual(['/home/.agents/skills/a'])
+      .toEqual([])
+  })
+
+  it('still detects two providers targeting the same directory', () => {
+    const codex = providerById('codex')!
+    const duplicate = { ...codex, id: 'duplicate' }
+    expect(conflictingSkillTargets(buildPlan([skill('a', '/s/a')], [codex, duplicate], 'global', '/repo', '/home')))
+      .toEqual(['/home/.codex/skills/a'])
   })
 })
 
 describe('installItem', () => {
+  it('installs global Codex, Delta, and OpenCode copies without overwriting each other', () => {
+    const src = tmp('harness-src-')
+    writeFileSync(join(src, 'SKILL.md'), 'Run `/a`.')
+    const home = tmp('harness-home-')
+    const providers = ['codex', 'delta', 'opencode'].map((id) => providerById(id)!)
+    const plan = buildPlan([skill('a', src)], providers, 'global', '/repo', home)
+
+    expect(conflictingSkillTargets(plan)).toEqual([])
+    for (const item of plan) installItem(item, new Set(['a']))
+
+    expect(readFileSync(join(home, '.codex', 'skills', 'a', 'SKILL.md'), 'utf8')).toBe('Run `$a`.')
+    expect(readFileSync(join(home, '.agents', 'skills', 'a', 'SKILL.md'), 'utf8')).toBe('Run `/a`.')
+    expect(readFileSync(join(home, '.config', 'opencode', 'skills', 'a', 'SKILL.md'), 'utf8')).toBe('Run `/a`.')
+  })
+
   it('copies the skill folder (including references) to the target', () => {
     const src = tmp('harness-src-')
     writeFileSync(join(src, 'SKILL.md'), 'body')
@@ -102,7 +124,7 @@ describe('installItem', () => {
     writeFileSync(join(src, 'SKILL.md'), 'Then run `/test-feature` against the acceptance criteria.\nSee `/unknown-skill` too.')
 
     const codexDest = tmp('harness-dest-')
-    const codexTarget = join(codexDest, '.agents', 'skills', 'a')
+    const codexTarget = join(codexDest, '.codex', 'skills', 'a')
     installItem(
       { skill: skill('a', src), provider: providerById('codex')!, targetDir: codexTarget, status: 'new' },
       new Set(['test-feature']),
