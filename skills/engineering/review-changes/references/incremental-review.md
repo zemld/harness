@@ -2,7 +2,7 @@
 
 ## Eligibility
 
-Reuse requires the prior reviewed diff, requirement revisions, applicable conventions, coverage ledger, role reports, and arbitration decisions.
+Reuse requires the reviewed diff identity, requirement revisions, applicable conventions, coverage ledger, role reports, and arbitration decisions.
 Missing evidence, a new base revision, or changed business scope, architectural ownership, or public contracts requires full review.
 
 ## Coverage and role selection
