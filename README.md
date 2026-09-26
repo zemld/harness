@@ -7,8 +7,9 @@ npx github:zemld/harness add
 ```
 
 Select skills for any supported provider and custom agents for Codex and Delta.
-Project scope installs Codex agents under `.codex/agents/`; global scope uses
-`~/.codex/agents/`. Delta profiles are always installed to Delta's machine-local
+Project scope installs Codex skills under `.codex/skills/` and agents under
+`.codex/agents/`; global scope uses `~/.codex/skills/` and `~/.codex/agents/`.
+Delta profiles are always installed to Delta's machine-local
 `profiles/` directory, regardless of skill scope. The installer previews new
 and replaced destinations before writing; use `--dry-run` to preview without
 installing.
@@ -23,8 +24,8 @@ directory, not in the project's `.delta/` directory; `DELTA_CONFIG_DIR` can
 change that location. The default macOS destination is
 `~/Library/Application Support/delta/profiles/`; for a development build,
 set `DELTA_CONFIG_DIR` to its `delta-dev` configuration directory. Global Codex
-and Delta skills cannot be selected together: they share `~/.agents/skills/`
-but need different skill-reference syntax.
+and Delta skills can be installed together because they use separate directories.
+Existing Codex skills in `.agents/skills/` are not moved or removed automatically.
 Re-running `add` overwrites selected Delta profile files, including model choices
 changed locally in Delta's settings; check the preview before confirming.
 

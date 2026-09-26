@@ -47,7 +47,7 @@ export function buildPlan(
   return plan
 }
 
-/** A destination cannot hold both Codex's rewritten and Delta's original skill. */
+/** A destination cannot hold two providers' differently formatted copies of a skill. */
 export function conflictingSkillTargets(plan: PlanItem[]): string[] {
   const seen = new Set<string>()
   const conflicts = new Set<string>()

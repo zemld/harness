@@ -11,7 +11,7 @@ describe('skillsRoot', () => {
     expect(skillsRoot(providerById('claude')!, 'project', cwd, home)).toBe('/repo/.claude/skills')
     expect(skillsRoot(providerById('cursor')!, 'project', cwd, home)).toBe('/repo/.cursor/skills')
     expect(skillsRoot(providerById('opencode')!, 'project', cwd, home)).toBe('/repo/.opencode/skills')
-    expect(skillsRoot(providerById('codex')!, 'project', cwd, home)).toBe('/repo/.agents/skills')
+    expect(skillsRoot(providerById('codex')!, 'project', cwd, home)).toBe('/repo/.codex/skills')
     expect(skillsRoot(providerById('delta')!, 'project', cwd, home)).toBe('/repo/.delta/skills')
   })
 
@@ -19,6 +19,7 @@ describe('skillsRoot', () => {
     const home = '/home/u'
     expect(skillsRoot(providerById('claude')!, 'global', '/repo', home)).toBe('/home/u/.claude/skills')
     expect(skillsRoot(providerById('opencode')!, 'global', '/repo', home)).toBe('/home/u/.config/opencode/skills')
+    expect(skillsRoot(providerById('codex')!, 'global', '/repo', home)).toBe('/home/u/.codex/skills')
     expect(skillsRoot(providerById('delta')!, 'global', '/repo', home)).toBe('/home/u/.agents/skills')
   })
 })
@@ -31,9 +32,11 @@ describe('isDetected', () => {
     expect(isDetected(providerById('claude')!, home)).toBe(false)
   })
 
-  it('detects codex via either .codex or .agents', () => {
+  it('detects codex via .codex, not Delta’s .agents', () => {
     const home = mkdtempSync(join(tmpdir(), 'harness-detect-'))
     mkdirSync(join(home, '.agents'))
+    expect(isDetected(providerById('codex')!, home)).toBe(false)
+    mkdirSync(join(home, '.codex'))
     expect(isDetected(providerById('codex')!, home)).toBe(true)
   })
 

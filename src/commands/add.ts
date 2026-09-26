@@ -242,10 +242,7 @@ async function confirmStep(
 
   const conflicts = conflictingSkillTargets(skillPlan)
   if (conflicts.length > 0) {
-    p.log.error(
-      'Codex and Delta global skills share ~/.agents/skills but require different skill references. ' +
-      'Choose project scope or only one of these providers.',
-    )
+    p.log.error(`Multiple providers target the same skill destination: ${conflicts.join(', ')}. Choose different providers.`)
     if (dryRun) {
       p.outro(ansis.red('dry run · conflicting destinations · nothing written'))
       return 'DRYRUN'
