@@ -1,6 +1,6 @@
 ---
 name: implement-feature
-description: Implements one spec in stable batches and leaves a reviewed, acceptance-tested diff ready for a pull request.
+description: Implements one spec in stable batches, reviews and acceptance-tests it, then publishes the resulting changes as a pull request.
 disable-model-invocation: true
 ---
 
@@ -15,7 +15,8 @@ Justify each new entity, queue, or lifecycle against a requirement and an inspec
 Keep business requirements in the spec; the map indexes their implementation and verification rather than becoming another spec.
 Retrieve missing facts independently and ask the user only about unresolved requirements, scope, or contradictory decisions.
 Identify the documented build, codegen, formatting, static-check, full-test, and acceptance commands.
-Check prerequisites and acceptance feasibility before implementation, including transport availability and environment access.
+Identify the intended integration branch and ensure the work is on a publishable non-default branch without discarding unrelated user changes.
+Check prerequisites and acceptance feasibility before implementation, including transport availability, environment access, remote authentication, and pull-request tooling.
 A foundation task may use integration acceptance instead of live API acceptance only when the agreed criteria explicitly allow it.
 Close fit only when every requirement has an implementation and verification mapping and no unresolved prerequisite blocks that plan.
 
@@ -44,12 +45,31 @@ After two consecutive repair rounds without reducing their count, pause automati
 This pause never dismisses unresolved defects; ask the user only if the revised plan requires a scope or requirements decision.
 Close review only when coverage is complete and arbitration is `CLEAR` on the current diff.
 
-## Acceptance and completion
+## Acceptance
 
 After review closes, run `/test-feature` for all in-scope real-API criteria and run the mapped checks for other agreed acceptance criteria.
 Repair acceptance failures as a batch and return through checks and review.
 Reuse passing check evidence only while its diff, requirements, and relevant environment remain unchanged.
 Do not rerun full tests solely because a read-only review finished.
-Report changed files, commands and verdicts, the final diff identity, and every unverified criterion.
-Return PASS only when fit, batch checks, review, and all in-scope acceptance criteria pass for the final unchanged diff.
-Otherwise return FAIL or BLOCKED with the remaining defects or evidenced prerequisites; arbitration cannot waive those gates.
+
+## Pull request publication
+
+Treat explicit invocation of this skill as authorization to commit the in-scope changes, push the implementation branch, and create or update its pull request.
+Do not wait for a separate request to create the pull request.
+Follow the repository's documented branch, commit, push, and pull-request workflow, and never merge the pull request.
+Inspect the current branch for an existing pull request before publishing and update it instead of creating a duplicate.
+Commit only the in-scope files, push the branch, and create or update a pull request against the intended integration branch.
+When all required gates pass, publish a ready-for-review pull request.
+If a meaningful in-scope diff remains but a required check or acceptance criterion is still failing or blocked after the required repair attempts, publish or update a draft pull request and state the exact failure, evidence, and unverified criteria.
+Do not use draft status to bypass a repairable failure.
+Include the implementation summary, verification commands and verdicts, and every remaining blocker in the pull-request body.
+Read the published pull request back and verify its URL, base and head branches, draft state, head commit, changed-file set, and reported checks against the final local diff.
+Close publication only when the pull request exists and its remote head contains the final local diff.
+If there is no meaningful diff, or authentication, push, or pull-request creation is unavailable, return BLOCKED with the failing command and evidence instead of claiming publication.
+
+## Completion
+
+Report changed files, commands and verdicts, the final diff identity, every unverified criterion, and the pull-request URL, state, and head commit.
+Return PASS only when fit, batch checks, review, and all in-scope acceptance criteria pass for the final unchanged diff and its ready-for-review pull request is verified.
+A local diff, commit, pushed branch, or statement that the work is ready for a pull request is not completion.
+Otherwise return FAIL or BLOCKED with the remaining defects or evidenced prerequisites and the draft pull-request URL when one was published; arbitration cannot waive those gates.
