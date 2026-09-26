@@ -39,8 +39,8 @@ function printHelp(): void {
   console.log(`harness — install skills and Codex or Delta subagents
 
 Usage:
-  npx github:zemld/harness add [--dry-run]   Interactive installer
-  npx github:zemld/harness list              List available skills and subagents
+  npx --allow-git=root github:zemld/harness add [--dry-run]   Interactive installer
+  npx --allow-git=root github:zemld/harness list              List available skills and subagents
 
 Options:
   --dry-run    Compute and print the plan without writing anything

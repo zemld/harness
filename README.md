@@ -3,8 +3,12 @@
 ## Installation
 
 ```
-npx github:zemld/harness add
+npx --allow-git=root github:zemld/harness add
 ```
+
+With npm 12, Git packages are disabled by default. `--allow-git=root`
+permits this top-level GitHub package for this command only; it does not
+enable Git dependencies or change your npm configuration permanently.
 
 Select skills for any supported provider and custom agents for Codex and Delta.
 Project scope installs Codex agents under `.codex/agents/`; global scope uses

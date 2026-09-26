@@ -320,7 +320,7 @@ function renderNextSteps(): string {
   return [
     `${ansis.cyan('run')}     try an installed skill or agent`,
     `${ansis.cyan('update')}  re-run add — it always overwrites`,
-    `${ansis.cyan('list')}    npx github:zemld/harness list`,
+    `${ansis.cyan('list')}    npx --allow-git=root github:zemld/harness list`,
   ].join('\n')
 }
 
