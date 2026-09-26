@@ -9,6 +9,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 // Compiled entry lives at dist/cli.js, so the repo root is one level up.
 const skillsRootDir = join(here, "..", "skills");
 const agentsRootDir = join(here, "..", "agents", "codex");
+const deltaAgentsRootDir = join(here, "..", "agents", "delta");
 
 const argv = mri(process.argv.slice(2), {
   boolean: ["dry-run", "help"],
@@ -23,10 +24,10 @@ if (argv.help || !command) {
 
 switch (command) {
   case "add":
-    await runAdd({ skillsRootDir, agentsRootDir, dryRun: Boolean(argv["dry-run"]) });
+    await runAdd({ skillsRootDir, agentsRootDir, deltaAgentsRootDir, dryRun: Boolean(argv["dry-run"]) });
     break;
   case "list":
-    runList({ skillsRootDir, agentsRootDir });
+    runList({ skillsRootDir, agentsRootDir, deltaAgentsRootDir });
     break;
   default:
     console.error(`Unknown command: ${command}\n`);
@@ -35,11 +36,11 @@ switch (command) {
 }
 
 function printHelp(): void {
-  console.log(`harness — install skills and Codex agents
+  console.log(`harness — install skills and Codex or Delta subagents
 
 Usage:
   npx github:zemld/harness add [--dry-run]   Interactive installer
-  npx github:zemld/harness list              List available skills and Codex agents
+  npx github:zemld/harness list              List available skills and subagents
 
 Options:
   --dry-run    Compute and print the plan without writing anything

@@ -1,5 +1,6 @@
 import { existsSync } from 'node:fs'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
+import { deltaProfilesRoot } from './delta.js'
 
 export type Scope = 'project' | 'global'
 
@@ -49,6 +50,13 @@ export const PROVIDERS: Provider[] = [
     globalDir: ['.agents', 'skills'],
     detect: [['.codex'], ['.agents']],
   },
+  {
+    id: 'delta',
+    label: 'Delta',
+    projectDir: ['.delta', 'skills'],
+    globalDir: ['.agents', 'skills'],
+    detect: [], // The active config path may be relocated by DELTA_CONFIG_DIR.
+  },
 ]
 
 export function providerById(id: string): Provider | undefined {
@@ -63,5 +71,6 @@ export function skillsRoot(provider: Provider, scope: Scope, cwd: string, home: 
 
 /** True when the provider's config directory is present on this machine. */
 export function isDetected(provider: Provider, home: string): boolean {
+  if (provider.id === 'delta') return existsSync(dirname(deltaProfilesRoot(home)))
   return provider.detect.some((segments) => existsSync(join(home, ...segments)))
 }

@@ -2,34 +2,51 @@ import { homedir } from 'node:os'
 import * as p from '@clack/prompts'
 import ansis from 'ansis'
 import { discoverAgents, type Agent } from '../core/agents.js'
+import { deltaProfilesRoot } from '../core/delta.js'
 import { installAgent, installItem } from '../core/install.js'
-import { buildAgentPlan, buildPlan, type AgentPlanItem, type PlanItem } from '../core/plan.js'
+import {
+  buildAgentPlan, buildDeltaAgentPlan, buildPlan, conflictingSkillTargets,
+  type AgentPlanItem, type PlanItem,
+} from '../core/plan.js'
 import { isDetected, PROVIDERS, type Scope } from '../core/providers.js'
 import { discoverSkills, resolveWithDeps, type Skill } from '../core/skills.js'
 
 export interface AddOptions {
   skillsRootDir: string
   agentsRootDir: string
+  deltaAgentsRootDir: string
   dryRun: boolean
 }
 
-type Step = { kind: 'providers' } | { kind: 'scope' } | { kind: 'skills'; topic: string } | { kind: 'agents' } | { kind: 'confirm' }
+type Platform = 'codex' | 'delta'
+type Step =
+  | { kind: 'providers' }
+  | { kind: 'scope' }
+  | { kind: 'skills'; topic: string }
+  | { kind: 'agents'; platform: Platform }
+  | { kind: 'confirm' }
 
-export async function runAdd({ skillsRootDir, agentsRootDir, dryRun }: AddOptions): Promise<void> {
+export async function runAdd({ skillsRootDir, agentsRootDir, deltaAgentsRootDir, dryRun }: AddOptions): Promise<void> {
   const cwd = process.cwd()
   const home = homedir()
+  const profilesDir = deltaProfilesRoot(home)
 
-  p.intro(ansis.bold('harness') + ansis.dim(' · install skills and Codex agents · Esc = back'))
+  p.intro(ansis.bold('harness') + ansis.dim(' · install skills and subagents · Esc = back'))
 
   const skills = discoverSkills(skillsRootDir)
-  const agents = discoverAgents(agentsRootDir)
-  if (skills.length === 0 && agents.length === 0) {
-    p.cancel('No skills or Codex agents found in this repository.')
+  const agents = { codex: discoverAgents(agentsRootDir), delta: discoverAgents(deltaAgentsRootDir, 'delta') }
+  if (skills.length === 0 && agents.codex.length === 0 && agents.delta.length === 0) {
+    p.cancel('No skills or subagents found in this repository.')
     process.exit(1)
   }
 
   const detected = PROVIDERS.filter((pr) => isDetected(pr, home)).map((pr) => pr.id)
-  const state = { providers: detected, scope: 'project' as Scope, selected: [] as string[], selectedAgents: [] as string[] }
+  const state = {
+    providers: detected,
+    scope: 'project' as Scope,
+    selected: [] as string[],
+    selectedAgents: { codex: [] as string[], delta: [] as string[] },
+  }
 
   // One step per topic keeps every skill list short: no scrolling past one
   // category to reach the next. Esc walks one step back; from the first step it
@@ -39,13 +56,19 @@ export async function runAdd({ skillsRootDir, agentsRootDir, dryRun }: AddOption
     { kind: 'providers' },
     { kind: 'scope' },
     ...topics.map((topic): Step => ({ kind: 'skills', topic })),
-    { kind: 'agents' },
+    { kind: 'agents', platform: 'codex' },
+    { kind: 'agents', platform: 'delta' },
     { kind: 'confirm' },
   ]
 
   const move = (index: number, direction: -1 | 1): number => {
     let next = index + direction
-    if (steps[next]?.kind === 'agents' && (!state.providers.includes('codex') || agents.length === 0)) next += direction
+    while (true) {
+      const candidate = steps[next]
+      if (candidate?.kind !== 'agents' ||
+        (state.providers.includes(candidate.platform) && agents[candidate.platform].length > 0)) break
+      next += direction
+    }
     return next
   }
 
@@ -76,19 +99,24 @@ export async function runAdd({ skillsRootDir, agentsRootDir, dryRun }: AddOption
         i = move(i, 1)
       }
     } else if (step.kind === 'agents') {
-      const r = await pickAgents(agents, state.selectedAgents)
+      const r = await pickAgents(agents[step.platform], state.selectedAgents[step.platform], step.platform)
       if (r === 'CANCEL') i = move(i, -1)
       else {
-        state.selectedAgents = r
+        state.selectedAgents[step.platform] = r
         i = move(i, 1)
       }
     } else {
-      if (state.selected.length === 0 && (!state.providers.includes('codex') || state.selectedAgents.length === 0)) {
-        p.log.warn('Pick at least one skill or Codex agent.')
+      const hasAgents = (['codex', 'delta'] as const)
+        .some((platform) => state.providers.includes(platform) && state.selectedAgents[platform].length > 0)
+      if (state.selected.length === 0 && !hasAgents) {
+        p.log.warn('Pick at least one skill or subagent.')
         i = move(i, -1)
         continue
       }
-      const r = await confirmStep(skills, agents, state.providers, state.scope, state.selected, state.selectedAgents, dryRun, home, cwd)
+      const r = await confirmStep(
+        skills, agents, state.providers, state.scope, state.selected, state.selectedAgents,
+        dryRun, home, cwd, profilesDir,
+      )
       if (r === 'ABORT') return exit()
       if (r === 'BACK') i = move(i, -1)
       else if (r === 'DRYRUN') return
@@ -99,8 +127,16 @@ export async function runAdd({ skillsRootDir, agentsRootDir, dryRun }: AddOption
   const providers = PROVIDERS.filter((pr) => state.providers.includes(pr.id))
   const { skills: resolved } = resolveWithDeps(state.selected, skills)
   const skillPlan = buildPlan(resolved, providers, state.scope, cwd, home)
-  const selectedAgents = state.providers.includes('codex') ? agents.filter((a) => state.selectedAgents.includes(a.name)) : []
-  const agentPlan = buildAgentPlan(selectedAgents, state.scope, cwd, home)
+  const selectedAgents = {
+    codex: state.providers.includes('codex')
+      ? agents.codex.filter((a) => state.selectedAgents.codex.includes(a.name)) : [],
+    delta: state.providers.includes('delta')
+      ? agents.delta.filter((a) => state.selectedAgents.delta.includes(a.name)) : [],
+  }
+  const agentPlan = [
+    ...buildAgentPlan(selectedAgents.codex, state.scope, cwd, home),
+    ...buildDeltaAgentPlan(selectedAgents.delta, profilesDir),
+  ]
   const fileCount = skillPlan.length + agentPlan.length
 
   const allSkillNames = new Set(skills.map((sk) => sk.name))
@@ -120,7 +156,7 @@ export async function runAdd({ skillsRootDir, agentsRootDir, dryRun }: AddOption
   s.stop(ansis.green(`Installed ${fileCount} item(s)`))
 
   p.note(renderNextSteps(), 'next steps')
-  p.outro(ansis.green(`done · ${resolved.length} skills, ${selectedAgents.length} Codex agents`))
+  p.outro(ansis.green(`done · ${resolved.length} skills, ${agentPlan.length} subagents`))
 }
 
 async function pickProviders(detected: string[], initial: string[]): Promise<string[] | 'CANCEL'> {
@@ -167,9 +203,9 @@ async function pickTopicSkills(
   return res
 }
 
-async function pickAgents(agents: Agent[], initial: string[]): Promise<string[] | 'CANCEL'> {
+async function pickAgents(agents: Agent[], initial: string[], platform: Platform): Promise<string[] | 'CANCEL'> {
   const res = await p.multiselect<string>({
-    message: `Select ${ansis.cyan('Codex agents')}  ${ansis.dim('(space · a = all/none · empty = skip)')}`,
+    message: `Select ${ansis.cyan(platform === 'delta' ? 'Delta subagents (machine-local)' : 'Codex agents')}  ${ansis.dim('(space · a = all/none · empty = skip)')}`,
     options: agents.map((agent) => ({ value: agent.name, label: agent.name, hint: agent.description })),
     initialValues: initial,
     required: false,
@@ -180,26 +216,42 @@ async function pickAgents(agents: Agent[], initial: string[]): Promise<string[] 
 
 async function confirmStep(
   skills: Skill[],
-  agents: Agent[],
+  agents: Record<Platform, Agent[]>,
   providerIds: string[],
   scope: Scope,
   selected: string[],
-  selectedAgents: string[],
+  selectedAgents: Record<Platform, string[]>,
   dryRun: boolean,
   home: string,
   cwd: string,
+  profilesDir: string,
 ): Promise<'GO' | 'DRYRUN' | 'BACK' | 'ABORT'> {
   const providers = PROVIDERS.filter((pr) => providerIds.includes(pr.id))
   const { skills: resolved, added } = resolveWithDeps(selected, skills)
   const skillPlan = buildPlan(resolved, providers, scope, cwd, home)
-  const agentPlan = buildAgentPlan(
-    providerIds.includes('codex') ? agents.filter((a) => selectedAgents.includes(a.name)) : [],
-    scope,
-    cwd,
-    home,
+  const codexPlan = buildAgentPlan(
+    providerIds.includes('codex') ? agents.codex.filter((a) => selectedAgents.codex.includes(a.name)) : [],
+    scope, cwd, home,
+  )
+  const deltaPlan = buildDeltaAgentPlan(
+    providerIds.includes('delta') ? agents.delta.filter((a) => selectedAgents.delta.includes(a.name)) : [],
+    profilesDir,
   )
 
-  p.note(renderReview(skillPlan, agentPlan, resolved, providers, scope, added, home, cwd), 'Review')
+  p.note(renderReview(skillPlan, codexPlan, deltaPlan, resolved, providers, scope, added, home, cwd), 'Review')
+
+  const conflicts = conflictingSkillTargets(skillPlan)
+  if (conflicts.length > 0) {
+    p.log.error(
+      'Codex and Delta global skills share ~/.agents/skills but require different skill references. ' +
+      'Choose project scope or only one of these providers.',
+    )
+    if (dryRun) {
+      p.outro(ansis.red('dry run · conflicting destinations · nothing written'))
+      return 'DRYRUN'
+    }
+    return 'BACK'
+  }
 
   if (dryRun) {
     p.outro(ansis.dim('dry run · nothing written · drop --dry-run to install'))
@@ -207,7 +259,7 @@ async function confirmStep(
   }
 
   const action = await p.select<'go' | 'cancel'>({
-    message: `Install ${skillPlan.length + agentPlan.length} item(s)?  ${ansis.dim('(Esc = back)')}`,
+    message: `Install ${skillPlan.length + codexPlan.length + deltaPlan.length} item(s)?  ${ansis.dim('(Esc = back)')}`,
     options: [
       { value: 'go', label: 'Install' },
       { value: 'cancel', label: 'Cancel' },
@@ -221,7 +273,8 @@ async function confirmStep(
 
 function renderReview(
   skillPlan: PlanItem[],
-  agentPlan: AgentPlanItem[],
+  codexPlan: AgentPlanItem[],
+  deltaPlan: AgentPlanItem[],
   resolved: Skill[],
   providers: { label: string }[],
   scope: Scope,
@@ -237,22 +290,25 @@ function renderReview(
   lines.push(ansis.cyan('providers') + ansis.dim(` · ${providers.length}`))
   for (const pr of providers) lines.push(`  ${pr.label}`)
 
-  lines.push('', `${ansis.cyan('scope')}  ${scope}`)
+  lines.push('', `${ansis.cyan('skill scope')}  ${scope}` + (codexPlan.length ? ' · Codex agents follow scope' : ''))
 
   lines.push('', ansis.cyan('skills') + ansis.dim(` · ${resolved.length}`))
   for (const s of resolved) {
     lines.push(`  ${s.name}${addedSet.has(s.name) ? ansis.magenta('  +dep') : ''}`)
   }
 
-  lines.push('', ansis.cyan('Codex agents') + ansis.dim(` · ${agentPlan.length}`))
-  for (const item of agentPlan) lines.push(`  ${item.agent.name}`)
+  lines.push('', ansis.cyan('Codex agents') + ansis.dim(` · ${codexPlan.length}`))
+  for (const item of codexPlan) lines.push(`  ${item.agent.name}`)
 
-  lines.push('', ansis.cyan('destinations') + ansis.dim(` · ${skillPlan.length + agentPlan.length}`))
+  lines.push('', ansis.cyan('Delta subagents (machine-local)') + ansis.dim(` · ${deltaPlan.length}`))
+  for (const item of deltaPlan) lines.push(`  ${item.agent.name}`)
+
+  lines.push('', ansis.cyan('destinations') + ansis.dim(` · ${skillPlan.length + codexPlan.length + deltaPlan.length}`))
   for (const item of skillPlan) {
     const tag = item.status === 'overwrite' ? ansis.yellow('~') : ansis.green('+')
     lines.push(`  ${tag} ${shorten(item.targetDir, home, cwd)}`)
   }
-  for (const item of agentPlan) {
+  for (const item of [...codexPlan, ...deltaPlan]) {
     const tag = item.status === 'overwrite' ? ansis.yellow('~') : ansis.green('+')
     lines.push(`  ${tag} ${shorten(item.targetFile, home, cwd)}`)
   }

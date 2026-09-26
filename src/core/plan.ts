@@ -47,9 +47,29 @@ export function buildPlan(
   return plan
 }
 
+/** A destination cannot hold both Codex's rewritten and Delta's original skill. */
+export function conflictingSkillTargets(plan: PlanItem[]): string[] {
+  const seen = new Set<string>()
+  const conflicts = new Set<string>()
+  for (const item of plan) {
+    if (seen.has(item.targetDir)) conflicts.add(item.targetDir)
+    seen.add(item.targetDir)
+  }
+  return [...conflicts]
+}
+
 /** Compute Codex agent destinations for the selected scope. */
 export function buildAgentPlan(agents: Agent[], scope: Scope, cwd: string, home: string): AgentPlanItem[] {
   const root = join(scope === 'project' ? cwd : home, '.codex', 'agents')
+  return planAgentFiles(agents, root)
+}
+
+/** Delta profiles always live in the app's local configuration, regardless of skill scope. */
+export function buildDeltaAgentPlan(agents: Agent[], profilesDir: string): AgentPlanItem[] {
+  return planAgentFiles(agents, profilesDir)
+}
+
+function planAgentFiles(agents: Agent[], root: string): AgentPlanItem[] {
   return agents.map((agent) => {
     const targetFile = join(root, `${agent.name}.toml`)
     return { agent, targetFile, status: existsSync(targetFile) ? 'overwrite' : 'new' }

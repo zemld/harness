@@ -1,7 +1,7 @@
 {
   "name": "harness",
   "version": "0.1.0",
-  "description": "Interactive installer for skills and Codex agents — npx github:zemld/harness add",
+  "description": "Interactive installer for skills and Codex or Delta subagents — npx github:zemld/harness add",
   "type": "module",
   "bin": {
     "harness": "dist/cli.js"

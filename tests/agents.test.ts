@@ -3,8 +3,9 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { discoverAgents } from '../src/core/agents.js'
+import { deltaProfilesRoot } from '../src/core/delta.js'
 import { installAgent } from '../src/core/install.js'
-import { buildAgentPlan } from '../src/core/plan.js'
+import { buildAgentPlan, buildDeltaAgentPlan } from '../src/core/plan.js'
 
 function tmp(): string {
   return mkdtempSync(join(tmpdir(), 'harness-agents-'))
@@ -52,5 +53,39 @@ describe('Codex agent installation', () => {
     writeFileSync(join(source, 'two.toml'), content)
 
     expect(() => discoverAgents(source)).toThrow('Invalid or duplicate Codex agent')
+  })
+})
+
+describe('Delta profile installation', () => {
+  it('uses the filename as profile id and accepts a built-in reviewer override', () => {
+    const source = tmp()
+    writeFileSync(join(source, 'reviewer.toml'), 'worktree = "shared"\nprompt = "Check changes"\n')
+    writeFileSync(join(source, 'code-writer.toml'), 'name = "Writer"\ndescription = "Implements a specification."\n')
+
+    const agents = discoverAgents(source, 'delta')
+    expect(agents.map((agent) => agent.name)).toEqual(['code-writer', 'reviewer'])
+    const profiles = join(tmp(), 'delta', 'profiles')
+    const plan = buildDeltaAgentPlan(agents, profiles)
+    expect(plan[0].targetFile).toBe(join(profiles, 'code-writer.toml'))
+    expect(plan[1].targetFile).toBe(join(profiles, 'reviewer.toml'))
+    for (const item of plan) installAgent(item)
+    expect(readFileSync(join(profiles, 'reviewer.toml'), 'utf8')).toBe('worktree = "shared"\nprompt = "Check changes"\n')
+  })
+
+  it('rejects a custom profile without a description', () => {
+    const source = tmp()
+    writeFileSync(join(source, 'writer.toml'), 'name = "Writer"\n')
+    expect(() => discoverAgents(source, 'delta')).toThrow('Invalid or duplicate Delta profile')
+  })
+
+  it('uses Delta config paths regardless of the selected skill scope', () => {
+    const home = tmp()
+    expect(deltaProfilesRoot(home, 'darwin', {})).toBe(join(home, 'Library', 'Application Support', 'delta', 'profiles'))
+    expect(deltaProfilesRoot(home, 'linux', { XDG_CONFIG_HOME: join(home, 'xdg') }))
+      .toBe(join(home, 'xdg', 'delta', 'profiles'))
+    expect(deltaProfilesRoot(home, 'win32', { APPDATA: join(home, 'appdata') }))
+      .toBe(join(home, 'appdata', 'delta', 'profiles'))
+    expect(deltaProfilesRoot(home, 'darwin', { DELTA_CONFIG_DIR: join(home, 'custom') }))
+      .toBe(join(home, 'custom', 'profiles'))
   })
 })

@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { installItem } from '../src/core/install.js'
-import { buildPlan } from '../src/core/plan.js'
+import { buildPlan, conflictingSkillTargets } from '../src/core/plan.js'
 import { providerById } from '../src/core/providers.js'
 import type { Skill } from '../src/core/skills.js'
 
@@ -40,6 +40,13 @@ describe('buildPlan', () => {
     )
     expect(plan.find((i) => i.skill.name === 'a')!.status).toBe('overwrite')
     expect(plan.find((i) => i.skill.name === 'b')!.status).toBe('new')
+  })
+
+  it('separates Codex and Delta project skills but flags their global collision', () => {
+    const providers = [providerById('codex')!, providerById('delta')!]
+    expect(conflictingSkillTargets(buildPlan([skill('a', '/s/a')], providers, 'project', '/repo', '/home'))).toEqual([])
+    expect(conflictingSkillTargets(buildPlan([skill('a', '/s/a')], providers, 'global', '/repo', '/home')))
+      .toEqual(['/home/.agents/skills/a'])
   })
 })
 
@@ -111,6 +118,16 @@ describe('installItem', () => {
       new Set(['test-feature']),
     )
     expect(readFileSync(join(claudeTarget, 'SKILL.md'), 'utf8')).toBe(
+      'Then run `/test-feature` against the acceptance criteria.\nSee `/unknown-skill` too.',
+    )
+
+    const deltaDest = tmp('harness-dest-')
+    const deltaTarget = join(deltaDest, '.delta', 'skills', 'a')
+    installItem(
+      { skill: skill('a', src), provider: providerById('delta')!, targetDir: deltaTarget, status: 'new' },
+      new Set(['test-feature']),
+    )
+    expect(readFileSync(join(deltaTarget, 'SKILL.md'), 'utf8')).toBe(
       'Then run `/test-feature` against the acceptance criteria.\nSee `/unknown-skill` too.',
     )
   })
