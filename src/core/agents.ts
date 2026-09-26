@@ -7,8 +7,8 @@ export interface Agent {
   file: string
 }
 
-/** Discover Codex agent definitions under agents/codex. */
-export function discoverAgents(dir: string): Agent[] {
+/** Discover Codex agents or Delta profiles from their TOML source directory. */
+export function discoverAgents(dir: string, platform: 'codex' | 'delta' = 'codex'): Agent[] {
   const agents: Agent[] = []
   let entries
   try {
@@ -22,10 +22,14 @@ export function discoverAgents(dir: string): Agent[] {
     if (!entry.isFile() || !entry.name.endsWith('.toml')) continue
     const file = join(dir, entry.name)
     const content = readFileSync(file, 'utf8')
-    const name = readString(content, 'name')
-    const description = readString(content, 'description')
+    // Delta's profile id is its filename. Built-in reviewer overrides need no
+    // name or description in the TOML; Codex uses the name inside the file.
+    const name = platform === 'delta' ? entry.name.slice(0, -5) : readString(content, 'name')
+    const description = readString(content, 'description') ?? (platform === 'delta' && name === 'reviewer'
+      ? 'Reviews code changes against a specification.'
+      : undefined)
     if (!name || !/^[a-z][a-z0-9_-]*$/.test(name) || !description || names.has(name)) {
-      throw new Error(`Invalid or duplicate Codex agent: ${file}`)
+      throw new Error(`Invalid or duplicate ${platform === 'delta' ? 'Delta profile' : 'Codex agent'}: ${file}`)
     }
     names.add(name)
     agents.push({ name, description, file })
