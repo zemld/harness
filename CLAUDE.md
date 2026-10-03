@@ -17,7 +17,7 @@ docs/            # Reference documentation (knowledge-base only)
     *.md
 ```
 
-Coding conventions are not under `docs/` — they live in the `read-docs` skill's `references/engineering/` and are reached by invoking `/read-docs` (see Docs below).
+The active skill catalog mirrors the personal Codex installation; skills absent from that installation live under `skills/deprecated/` and are excluded from installation.
 
 ## Skill rules
 
@@ -40,10 +40,10 @@ A skill exists to wrangle determinism out of a stochastic system. The root virtu
 7. **Splitting** — extract a skill only when a distinct trigger needs it or observed premature completion forces a sequence boundary; prefer thin wrappers.
 8. **Shared vocabulary** — keep `CONTEXT.md` as a glossary and record hard, surprising trade-offs as minimal ADRs; create both lazily.
 
-Full rules with examples + the skill file format: `skills/engineering/upsert-skill/references/authoring-rules.md`.
+Full rules with examples + the skill file format: `skills/productivity/upsert-skill/references/authoring-rules.md`.
 
 ## Docs
 
-**Coding conventions** — service/folder structure, style, testing, dependency choices per stack — live in the `read-docs` skill (`skills/engineering/read-docs/references/engineering/`), the single source of truth for them. Never read those files by path or duplicate their rules; invoke `/read-docs` for the stack you're working in, and it routes to the exact doc. This keeps the conventions portable to environments that load skills but not `docs/` (e.g. the Claude app).
+**Archived coding conventions** — service/folder structure, style, testing, dependency choices per stack — remain in `skills/deprecated/read-docs/references/engineering/`. The `read-docs` skill is deprecated and is no longer installed with the active catalog. If using that archived skill explicitly, invoke `/read-docs` to route to the exact convention document rather than duplicating its rules.
 
 `./docs/` now holds only `knowledge-base/` — reference material that is not a coding convention.

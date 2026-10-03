@@ -11,10 +11,10 @@ Audit a project end-to-end against its stack's conventions, fix every direct vio
 ## Step 1 — Detect the stack and read the procedure
 
 1. Inspect the project root and judge which stack it uses.
-2. Invoke the `/read-docs` skill for that stack's `Refactor project` conventions — it routes to the stack index and reads every doc that section lists. These are the source of truth for the rules you audit.
-3. If `/read-docs` reports the stack has no conventions, stop and report the gap.
+2. Invoke the `$read-docs` skill for that stack's `Refactor project` conventions — it routes to the stack index and reads every doc that section lists. These are the source of truth for the rules you audit.
+3. If `$read-docs` reports the stack has no conventions, stop and report the gap.
 
-Done when you can name the stack, its category list, and its format/check command from the docs `/read-docs` returned.
+Done when you can name the stack, its category list, and its format/check command from the docs `$read-docs` returned.
 
 ## Step 2 — Audit (inline, read-only)
 

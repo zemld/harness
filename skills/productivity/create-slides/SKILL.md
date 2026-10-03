@@ -7,7 +7,7 @@ disable-model-invocation: true
 
 Build a Marp deck (`slides.md`) plus a brief-matched `theme.css` under `<working_dir>/presentations/<slug>/` (default `working_dir` = cwd; `slug` = kebab-case summary of the topic). The deck's text follows the language the user used for the topic unless they say otherwise.
 
-The topic comes from the skill argument — never re-confirm it. Synthesize audience, length, angle, and screenshot mode from the conversation; ask only for a structural gap you cannot infer. Run a `/grill` session first only when the conversation lacks the core material to build the deck — no clear angle/thesis or no known audience. Otherwise infer what you can and ask at most one follow-up for a lone gap.
+The topic comes from the skill argument — never re-confirm it. Synthesize audience, length, angle, and screenshot mode from the conversation; ask only for a structural gap you cannot infer. Run a `$grill` session first only when the conversation lacks the core material to build the deck — no clear angle/thesis or no known audience. Otherwise infer what you can and ask at most one follow-up for a lone gap.
 
 Resolve the design brief: synthesize a theme; if no brief exists anywhere, ask one design question and wait — offer examples (anthropic-cream minimalist, dark tech with neon accent, academic on white, in the style of Stripe, or their own). Never guess a visual identity from the topic.
 

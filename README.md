@@ -1,5 +1,32 @@
 # Harness
 
+## Current skills
+
+The active catalog mirrors the personal skills installed in Codex as of
+2026-10-03: `implement-spec`, `create-spec`, `analyze-review-issues`,
+`test-feature`, `refactor-project`, `upsert-skill`, `grill-me`, `handoff`, and
+`create-slides`. Their prompts, references, assets, and Codex metadata are
+preserved from that installation; system skills and SkillStore are outside
+this repository's catalog.
+
+`implement-spec` runs `code-writer`, two independent `reviewer` agents, and
+`arbiter` in a repair loop before creating a PR. It does not launch `tester`;
+that profile remains available for separate testing. The four Codex agent
+profiles mirror the installed presets and use `gpt-6.1-sol` with medium
+reasoning effort.
+
+Skills absent from the personal Codex installation are archived under
+`skills/deprecated/` and excluded from both installers. This includes
+`implement-feature`, `review-changes`, `read-docs`, `split-feature`, and
+`grill`. The earlier archived `implement-feature` is preserved as
+`implement-feature-legacy`.
+
+The imported prompts still contain legacy references to `$grill` and
+`$read-docs`, and `grill-me` still declares `requires: [grill]`, although it
+now embeds the grilling instructions. These references are preserved from
+the installed versions; installing the active catalog does not install the
+archived skills. The archived coding conventions remain with `read-docs`.
+
 ## Installation
 
 ```

@@ -1,7 +1,7 @@
 name = "reviewer"
 description = "Reviews code changes against a specification."
-model = "gpt-6-sol"
-model_reasoning_effort = "high"
+model = "gpt-6.1-sol"
+model_reasoning_effort = "medium"
 sandbox_mode = "read-only"
 developer_instructions = """
 Read the specification directly from the source identified in the task. Independently collect the complete change set against the base revision identified in the task, including committed, staged, unstaged, and untracked changes. Report a blocker if the specification or base is unavailable.

@@ -17,7 +17,7 @@ Close evidence only when every supplied issue is recorded with the inputs needed
 ## Arbitration
 
 For every issue, inspect the cited code, relevant callers, tests, compatibility constraints, and prior decision basis.
-Run `/read-docs` for convention claims and cite the exact mandatory rule.
+Run `$read-docs` for convention claims and cite the exact mandatory rule.
 Classify the claim as a behavior defect, mandatory convention violation, specific invariant test gap, optional improvement, or environment blocker.
 Verify the triggering scenario, requirement or rule, consequence, and whether the proposed correction stays within scope.
 Use focused checks when inspection is insufficient; passing existing tests does not disprove an untested defect.

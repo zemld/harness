@@ -25,7 +25,7 @@ Use this section order:
 4. `## Decisions`, split into `### Key` and `### Rest`.
 5. `## Functional requirements` — numbered verifiable claims, `FR-1`, `FR-2`, and so on.
 6. Optional `## Non-functional requirements` — only binding latency budgets, size or rate limits, compatibility, and security constraints.
-7. `## Acceptance criteria` — externally observable outcomes, one per line, each naming what to do and what to see for `/test-feature`.
+7. `## Acceptance criteria` — externally observable outcomes, one per line, each naming what to do and what to see for `$test-feature`.
 8. Optional `## Technical design` — only technical design settled in this session.
 
 Under `Decisions`, write one Key entry as `- **<Decision>** — what was chosen; why; what it cost.` when reversing it would force other decisions in this spec to change or would change the externally exposed contract. Write every other decision under Rest as one line stating what was chosen, without rationale.
