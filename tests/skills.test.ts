@@ -1,5 +1,26 @@
+import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
-import { resolveWithDeps, type Skill } from '../src/core/skills.js'
+import { discoverSkills, resolveWithDeps, type Skill } from '../src/core/skills.js'
+
+describe('repository skill catalog', () => {
+  it('offers the current personal skills and excludes the deprecated archive', () => {
+    const skillsRoot = fileURLToPath(new URL('../skills/', import.meta.url))
+    const skills = discoverSkills(skillsRoot)
+
+    expect(skills.map((entry) => entry.name).sort()).toEqual([
+      'analyze-review-issues',
+      'create-slides',
+      'create-spec',
+      'grill-me',
+      'handoff',
+      'implement-spec',
+      'refactor-project',
+      'test-feature',
+      'upsert-skill',
+    ])
+    expect(skills.every((entry) => entry.topic !== 'deprecated')).toBe(true)
+  })
+})
 
 function skill(name: string, requires: string[] = []): Skill {
   return { name, topic: 'productivity', description: '', requires, dir: `/skills/${name}` }
