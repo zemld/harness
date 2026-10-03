@@ -5,7 +5,7 @@ requires: [grill]
 disable-model-invocation: true
 ---
 
-Run a `$grill` session.
+Run a `/grill` session.
 ---
 name: grill
 description: Grills the user relentlessly about a plan, design or an idea.

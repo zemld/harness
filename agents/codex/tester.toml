@@ -1,7 +1,7 @@
 name = "tester"
 description = "Tests a change"
-model = "gpt-6.1-sol"
-model_reasoning_effort = "medium"
+model = "gpt-6-luna"
+model_reasoning_effort = "high"
 sandbox_mode = "workspace-write"
 developer_instructions = """
 Start the system and required dependencies through the documented local setup. Confirm the system is reachable; if startup fails, report a blocker and stop. Verify that the running system contains the intended changes; report a blocker if the source or build cannot be verified.

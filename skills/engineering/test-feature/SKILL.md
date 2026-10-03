@@ -1,6 +1,6 @@
 ---
 name: test-feature
-description: Use for live acceptance testing through real HTTP/gRPC APIs when implementation is ready or another skill requests `$test-feature`.
+description: Use for live acceptance testing through real HTTP/gRPC APIs when implementation is ready or another skill requests `/test-feature`.
 ---
 
 Read `CONTEXT.md` if present and use its vocabulary in the report.
