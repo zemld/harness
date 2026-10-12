@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { discoverSkills, resolveWithDeps, type Skill } from '../src/core/skills.js'
 
 describe('repository skill catalog', () => {
-  it('offers the current personal skills and excludes the deprecated archive', () => {
+  it('offers the personal harness skills and excludes external skills and the deprecated archive', () => {
     const skillsRoot = fileURLToPath(new URL('../skills/', import.meta.url))
     const skills = discoverSkills(skillsRoot)
 
@@ -15,6 +15,7 @@ describe('repository skill catalog', () => {
       'handoff',
       'implement-spec',
       'refactor-project',
+      'tdd',
       'test-feature',
       'upsert-skill',
     ])

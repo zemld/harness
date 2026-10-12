@@ -1,37 +1,44 @@
 ---
 name: create-spec
-description: Captures the design settled in this session into one spec file.
-allowed-tools: Read(references/**), Write(.features/**)
+description: Captures the design settled in this session into a specification in the project issue tracker.
 disable-model-invocation: true
 ---
 
-Capture what this session settled into one spec file.
+## Process
 
-## Step 1 — Settle
+1. Read the project GLOSSARY.md and use its vocabulary. Collect the material settled in this session and codebase. Never infer missing behavior, constraints, rationale, or technical design.
+2. Write and publish spec using template below.
 
-Fill the spec only from material settled in this session. Never infer, complete, or derive missing material — the spec is the only carrier of this design into a clean implementation session, and an invention reads exactly like a settled fact.
+<spec-template>
 
-Completion: every settled item belongs in a section below, and every absent item and inapplicable optional section is omitted.
+## Problem
 
-## Step 2 — Write
+The problem and who encounters it.
 
-Write `<working_dir>/.features/<feature-slug>/<spec-slug>.md`, creating the directory if needed. `working_dir` is the project root (default `cwd`). `feature-slug` is kebab-case for the whole feature; `spec-slug` is kebab-case for what this spec covers, and equals `feature-slug` when the feature was never split.
+## User stories
 
-Use this section order:
+A numbered list in the form "As an <actor>, I want <capability>, so that <benefit>".
 
-1. `# <Name>`.
-2. `## Meta` — author and date.
-3. `## Scope` — what this spec covers, followed by a short list of what sits next to it and is explicitly out.
-4. `## Decisions`, split into `### Key` and `### Rest`.
-5. `## Functional requirements` — numbered verifiable claims, `FR-1`, `FR-2`, and so on.
-6. Optional `## Non-functional requirements` — only binding latency budgets, size or rate limits, compatibility, and security constraints.
-7. `## Acceptance criteria` — externally observable outcomes, one per line, each naming what to do and what to see for `/test-feature`.
-8. Optional `## Technical design` — only technical design settled in this session.
+## Decisions
 
-Under `Decisions`, write one Key entry as `- **<Decision>** — what was chosen; why; what it cost.` when reversing it would force other decisions in this spec to change or would change the externally exposed contract. Write every other decision under Rest as one line stating what was chosen, without rationale.
+What was chosen and why, including constraints and trade-offs discussed in this session.
 
-Requirements state outcomes, not implementation routes. Record a choice and its rationale under Decisions; record its resulting structure under Technical design without repeating the same material.
+## Acceptance criteria
 
-When this session settled technical design, read `references/technical-design.md` before writing that section.
+Externally observable outcomes: what to do and what to see.
 
-Completion: the file is written with every applicable section in the order above and no inapplicable optional section.
+## Technical design
+
+Required: the agreed implementation structure, including applicable data models, components, contracts, and flows.
+Describe the resulting structure without repeating the decisions and their rationale.
+Use Mermaid diagrams when they clarify interactions or flows.
+
+## Non-functional requirements
+
+Optional: agreed performance, size, rate, compatibility, and security constraints.
+
+## Out of scope
+
+Explicitly agreed exclusions from this spec.
+
+</spec-template>
