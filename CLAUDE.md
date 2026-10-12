@@ -17,7 +17,7 @@ docs/            # Reference documentation (knowledge-base only)
     *.md
 ```
 
-The active skill catalog mirrors the personal Codex installation; skills absent from that installation live under `skills/deprecated/` and are excluded from installation.
+The active skill catalog mirrors the personal harness skills in Codex, excluding external skills (`pr`, `retro`, and `codebase-design`), system skills, SkillStore, and plugin-managed skills. Previously maintained skills absent from that installation live under `skills/deprecated/` and are excluded from installation.
 
 ## Skill rules
 

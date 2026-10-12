@@ -2,24 +2,23 @@
 
 ## Current skills
 
-The active catalog mirrors the personal skills installed in Codex as of
-2026-10-12: `implement-spec`, `create-spec`, `analyze-review-issues`,
-`test-feature`, `refactor-project`, `codebase-design`, `tdd`, `pr`, `retro`,
-`upsert-skill`, `grill-me`, `handoff`, and `create-slides`. Symlinked skills
-are copied with their contents. Prompts, references, assets, credits, and
-Codex metadata are preserved, with `/skill` references retained in the
-repository for provider-specific installation. System skills, SkillStore,
-and plugin-managed skills are outside this repository's catalog; editor
-backups and filesystem metadata are excluded.
+The active catalog mirrors the personal harness skills installed in Codex as
+of 2026-10-12: `implement-spec`, `create-spec`, `analyze-review-issues`,
+`test-feature`, `refactor-project`, `tdd`, `upsert-skill`, `grill-me`,
+`handoff`, and `create-slides`. Prompts, references, assets, and Codex metadata
+are preserved, with `/skill` references retained in the repository for
+provider-specific installation. External skills (`pr`, `retro`, and
+`codebase-design`), system skills, SkillStore, and plugin-managed skills are
+outside this repository's catalog; editor backups and filesystem metadata
+are excluded.
 
 `create-spec` publishes the design settled in the session to the project's
-issue tracker using a template with required technical design. `codebase-design`
-provides the shared vocabulary for deep modules and test seams; `tdd` defines
-the red → green loop at seams agreed with the user. `pr` supplies the PR body
-template, and `retro` reviews the coding session's environment.
+issue tracker using a template with required technical design. `tdd` defines
+the red → green loop at seams agreed with the user.
 
 `implement-spec` runs `code-writer`, two independent `reviewer` agents, and
-`arbiter` in a repair loop before creating a PR with the `pr` skill.
+`arbiter` in a repair loop before creating a PR with the externally installed
+`pr` skill; install that dependency separately.
 `code-writer` loads the installed `tdd` skill without relying on a personal
 absolute path. `reviewer` reads the project's `CODING_STANDARDS.md` if present.
 The workflow does not launch `tester`; that profile remains available for
@@ -34,8 +33,7 @@ Skills absent from the personal Codex installation are archived under
 
 The imported prompts still reference `/grill` and `/read-docs`, and
 `grill-me` still declares `requires: [grill]`, although it embeds the
-grilling instructions. `retro` references `writing-for-agents`, which is
-also absent from the personal catalog. These dependencies are preserved
+grilling instructions. These dependencies are preserved
 from the installed versions; installing the active catalog does not supply
 them. Existing prompts are synchronized rather than redesigned.
 
