@@ -19,11 +19,11 @@ the red → green loop at seams agreed with the user.
 `implement-spec` runs `code-writer`, two independent `reviewer` agents, and
 `arbiter` in a repair loop before creating a PR with the externally installed
 `pr` skill; install that dependency separately.
-`code-writer` loads the installed `tdd` skill without relying on a personal
-absolute path. `reviewer` reads the project's `CODING_STANDARDS.md` if present.
+`code-writer` delegates the TDD procedure to the installed `tdd` skill
+without duplicating its instructions or relying on a personal absolute path. `reviewer` reads the project's `CODING_STANDARDS.md` if present.
 The workflow does not launch `tester`; that profile remains available for
-separate testing. All four Codex profiles use `gpt-6.1-sol` with medium
-reasoning effort. Delta profiles carry the same updated instructions while
+separate testing. The three workflow Codex profiles use `gpt-6.1-sol` with medium
+reasoning effort; `tester` retains `gpt-6-luna` with high reasoning effort. Delta profiles carry the same updated instructions while
 retaining their existing model choices and shared worktree settings.
 
 Skills absent from the personal Codex installation are archived under
