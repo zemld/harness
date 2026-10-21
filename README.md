@@ -2,6 +2,13 @@
 
 ## Current skills
 
+`code-review` is imported unchanged from
+[`mattpocock/skills`](https://github.com/mattpocock/skills/tree/5beb35b040e3de97e54fa9e386d7e42d15c295c2/skills/engineering/code-review)
+at commit `5beb35b040e3de97e54fa9e386d7e42d15c295c2`. Its upstream
+`SKILL.md` and Codex metadata are preserved, with the upstream MIT license
+included in the skill directory. This is the baseline for later adaptation;
+the existing implementation workflow remains unchanged.
+
 The active catalog mirrors the personal harness skills installed in Codex as
 of 2026-10-12: `implement-spec`, `create-spec`, `analyze-review-issues`,
 `test-feature`, `refactor-project`, `tdd`, `upsert-skill`, `grill-me`,

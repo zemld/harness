@@ -9,6 +9,7 @@ describe('repository skill catalog', () => {
 
     expect(skills.map((entry) => entry.name).sort()).toEqual([
       'analyze-review-issues',
+      'code-review',
       'create-slides',
       'create-spec',
       'grill-me',
