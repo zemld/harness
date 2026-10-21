@@ -16,13 +16,15 @@ are excluded.
 issue tracker using a template with required technical design. `tdd` defines
 the red → green loop at seams agreed with the user.
 
-`implement-spec` runs `code-writer`, two independent `reviewer` agents, and
-`arbiter` in a repair loop before creating a PR with the externally installed
-`pr` skill; install that dependency separately.
+`implement-spec` runs `code-writer` and two independent `reviewer` agents
+in a repair loop before creating a PR with the externally installed `pr` skill;
+install that dependency separately. Review reports go directly to `code-writer`
+for the next iteration. `analyze-review-issues` remains available separately
+and is not part of this workflow.
 `code-writer` delegates the TDD procedure to the installed `tdd` skill
 without duplicating its instructions or relying on a personal absolute path. `reviewer` reads the project's `CODING_STANDARDS.md` if present.
 The workflow does not launch `tester`; that profile remains available for
-separate testing. The three workflow Codex profiles use `gpt-6.1-sol` with medium
+separate testing. The two workflow Codex profiles use `gpt-6.1-sol` with medium
 reasoning effort; `tester` retains `gpt-6-luna` with high reasoning effort. Delta profiles carry the same updated instructions while
 retaining their existing model choices and shared worktree settings.
 
@@ -66,9 +68,9 @@ Existing Codex skills in `.agents/skills/` are not moved or removed automaticall
 Re-running `add` overwrites selected Delta profile files, including model choices
 changed locally in Delta's settings; check the preview before confirming.
 
-All four profiles use a shared worktree, so wait for `code-writer` to finish
+All three profiles use a shared worktree, so wait for `code-writer` to finish
 before starting review and testing. The `reviewer` file extends Delta's built-in
-reviewer; the other three files define custom profiles. They pin ChatGPT
+reviewer; the other two files define custom profiles. They pin ChatGPT
 subscription models via `[model.any]`; users without access to those models
 must change the model selections in their local profile files. Instructions
 not to edit code are behavioral rules, not enforced read-only permissions.
