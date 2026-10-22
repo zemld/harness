@@ -2,8 +2,12 @@
 
 ## Current skills
 
-The active catalog mirrors the personal harness skills installed in Codex as
-of 2026-10-12: `implement-spec`, `create-spec`, `analyze-review-issues`,
+`code-review` is adapted from
+[`mattpocock/skills`](https://github.com/mattpocock/skills/tree/5beb35b040e3de97e54fa9e386d7e42d15c295c2/skills/engineering/code-review)
+at commit `5beb35b040e3de97e54fa9e386d7e42d15c295c2`. It collects all changes
+against the supplied base, including uncommitted changes and new files.
+
+The active catalog includes `implement-spec`, `create-spec`, `code-review`,
 `test-feature`, `refactor-project`, `tdd`, `upsert-skill`, `grill-me`,
 `handoff`, and `create-slides`. Prompts, references, assets, and Codex metadata
 are preserved, with `/skill` references retained in the repository for
@@ -19,8 +23,7 @@ the red → green loop at seams agreed with the user.
 `implement-spec` runs `code-writer` and two independent `reviewer` agents
 in a repair loop before creating a PR with the externally installed `pr` skill;
 install that dependency separately. Review reports go directly to `code-writer`
-for the next iteration. `analyze-review-issues` remains available separately
-and is not part of this workflow.
+for the next iteration.
 `code-writer` delegates the TDD procedure to the installed `tdd` skill
 without duplicating its instructions or relying on a personal absolute path. `reviewer` reads the project's `CODING_STANDARDS.md` if present.
 The workflow does not launch `tester`; that profile remains available for
