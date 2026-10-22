@@ -2,6 +2,7 @@
 name: implement-spec
 description: Orchestrates a specification through implementation, independent verification, and a pull request.
 disable-model-invocation: true
+requires: [code-review]
 ---
 
 # Very important rule
@@ -17,7 +18,7 @@ Follow these workflow stages:
 1. Prepare
 2. Implement until feature is done - repeat steps:
    1. Launch `code-writer` subagent with given specification source and task to make realization for it. If it isn't first iteration, also give subagent review results. Written code must be correctly built and formatted.
-   2. Launch two independent `reviewer` subagent with given specification source. First must check alignment between realization and specification. And second must do general code review: project conventions, style, mistakes.
+   2. Use `code-review` skill with the original specification source and review base.
 3. When all implementation is done and clear, use `pr` skill to make a pr
 
 ## Prepare
