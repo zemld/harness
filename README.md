@@ -12,11 +12,11 @@
 
 - `test-feature`
 - `create-slides`
+- `create-spec`
 
 ## Адаптированные
 
 - `code-review`
-- `implement`
 - `implement-spec`
 - `tdd`
 
@@ -27,6 +27,7 @@
 
 ## Что использую напрямую от Мэтта
 
+- `implement`
 - `grill-me`
 - `handoff`
 - `retro`
