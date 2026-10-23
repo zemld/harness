@@ -32,3 +32,4 @@
 - `retro`
 - `grill-with-docs`
 - `codebase-design`
+- `pr`
