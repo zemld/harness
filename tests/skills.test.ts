@@ -11,13 +11,11 @@ describe('repository skill catalog', () => {
       'code-review',
       'create-slides',
       'create-spec',
-      'grill-me',
-      'handoff',
       'implement-spec',
-      'refactor-project',
+      'make-great-coding-agent',
       'tdd',
       'test-feature',
-      'upsert-skill',
+      'wtf',
     ])
     expect(skills.every((entry) => entry.topic !== 'deprecated')).toBe(true)
   })

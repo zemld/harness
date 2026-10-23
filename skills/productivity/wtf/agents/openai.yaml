@@ -1,0 +1,5 @@
+interface:
+  display_name: wtf
+  short_description: Explains interesting topic easily and clearly.
+policy:
+  allow_implicit_invocation: true
