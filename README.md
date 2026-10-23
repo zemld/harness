@@ -1,79 +1,34 @@
-# Harness
+# Скиллы
 
-## Current skills
+Скиллы, собранные в этом репозитории - скиллы, которыми я пользуюсь постоянно.
+У них есть два источника:
 
-`code-review` is adapted from
-[`mattpocock/skills`](https://github.com/mattpocock/skills/tree/5beb35b040e3de97e54fa9e386d7e42d15c295c2/skills/engineering/code-review)
-at commit `5beb35b040e3de97e54fa9e386d7e42d15c295c2`. It collects all changes
-against the supplied base, including uncommitted changes and new files.
+- Самописные
+- Адаптированные от [`mattpocock/skills`](https://github.com/mattpocock/skills)
 
-The active catalog includes `implement-spec`, `create-spec`, `code-review`,
-`test-feature`, `refactor-project`, `tdd`, `upsert-skill`, `grill-me`,
-`handoff`, and `create-slides`. Prompts, references, assets, and Codex metadata
-are preserved, with `/skill` references retained in the repository for
-provider-specific installation. External skills (`pr`, `retro`, and
-`codebase-design`), system skills, SkillStore, and plugin-managed skills are
-outside this repository's catalog; editor backups and filesystem metadata
-are excluded.
+## Самописные
 
-`create-spec` publishes the design settled in the session to the project's
-issue tracker using a template with required technical design. `tdd` defines
-the red → green loop at seams agreed with the user.
+К ним относятся:
 
-`implement-spec` runs `code-writer` and two independent `reviewer` agents
-in a repair loop before creating a PR with the externally installed `pr` skill;
-install that dependency separately. Review reports go directly to `code-writer`
-for the next iteration.
-`code-writer` delegates the TDD procedure to the installed `tdd` skill
-without duplicating its instructions or relying on a personal absolute path. `reviewer` reads the project's `CODING_STANDARDS.md` if present.
-The workflow does not launch `tester`; that profile remains available for
-separate testing. The two workflow Codex profiles use `gpt-6.1-sol` with medium
-reasoning effort; `tester` retains `gpt-6-luna` with high reasoning effort. Delta profiles carry the same updated instructions while
-retaining their existing model choices and shared worktree settings.
+- `test-feature`
+- `create-slides`
 
-Skills absent from the personal Codex installation are archived under
-`skills/deprecated/` and excluded from both installers. This includes
-`implement-feature`, `review-changes`, `read-docs`, `split-feature`, and
-`grill`. The archived coding conventions remain with `read-docs`.
+## Адаптированные
 
-The imported prompts still reference `/grill` and `/read-docs`, and
-`grill-me` still declares `requires: [grill]`, although it embeds the
-grilling instructions. These dependencies are preserved
-from the installed versions; installing the active catalog does not supply
-them. Existing prompts are synchronized rather than redesigned.
+- `code-review`
+- `implement`
+- `implement-spec`
+- `tdd`
 
-## Installation
+Адаптация нужна из-за двух причин:
 
-```
-npx github:zemld/harness add
-```
+- Go, а не TypeScript
+- Специализированные субагенты
 
-Select skills for any supported provider and custom agents for Codex and Delta.
-Project scope installs Codex skills under `.codex/skills/` and agents under
-`.codex/agents/`; global scope uses `~/.codex/skills/` and `~/.codex/agents/`.
-Delta profiles are always installed to Delta's machine-local
-`profiles/` directory, regardless of skill scope. The installer previews new
-and replaced destinations before writing; use `--dry-run` to preview without
-installing.
+## Что использую напрямую от Мэтта
 
-## Delta subagent profiles
-
-The Delta equivalents of the Codex agents are in `agents/delta/`. Select Delta
-in `add` to install its skills and optionally its subagents. Project skills go
-under `.delta/skills/` (a Delta-specific override), and global skills under
-`~/.agents/skills/`. Delta keeps profiles in its machine-local configuration
-directory, not in the project's `.delta/` directory; `DELTA_CONFIG_DIR` can
-change that location. The default macOS destination is
-`~/Library/Application Support/delta/profiles/`; for a development build,
-set `DELTA_CONFIG_DIR` to its `delta-dev` configuration directory. Global Codex
-and Delta skills can be installed together because they use separate directories.
-Existing Codex skills in `.agents/skills/` are not moved or removed automatically.
-Re-running `add` overwrites selected Delta profile files, including model choices
-changed locally in Delta's settings; check the preview before confirming.
-
-All three profiles use a shared worktree, so wait for `code-writer` to finish
-before starting review and testing. The `reviewer` file extends Delta's built-in
-reviewer; the other two files define custom profiles. They pin ChatGPT
-subscription models via `[model.any]`; users without access to those models
-must change the model selections in their local profile files. Instructions
-not to edit code are behavioral rules, not enforced read-only permissions.
+- `grill-me`
+- `handoff`
+- `retro`
+- `grill-with-docs`
+- `codebase-design`

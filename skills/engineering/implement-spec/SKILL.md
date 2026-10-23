@@ -23,5 +23,5 @@ Follow these workflow stages:
 
 ## Prepare
 
-Read the original specification, `CONTEXT.md` if present.
+Read the original specification, `GLOSSARY.m` if present.
 Store each round's reports in `<project-root>/.features/<task-slug>/runs/round-N/`, using a task-derived kebab-case slug and consecutive round numbers; exclude this directory from implementation, review scope, and PR commits.
